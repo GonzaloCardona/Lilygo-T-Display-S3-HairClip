@@ -30,6 +30,7 @@ bool StorageManager::saveConfig(const HairClipConfig& config) {
     doc["scrollMode"] = config.scrollMode;
     doc["brightness"] = config.brightness;
     doc["rotation"] = config.rotation;
+    doc["swapBytes"] = config.swapBytes;
     doc["hasImage"] = config.hasImage;
 
     if (serializeJson(doc, file) == 0) {
@@ -74,6 +75,7 @@ HairClipConfig StorageManager::loadConfig() {
     config.scrollMode = doc["scrollMode"] | true;
     config.brightness = doc["brightness"] | DEFAULT_BRIGHTNESS;
     config.rotation = doc["rotation"] | 1;
+    config.swapBytes = doc["swapBytes"] | true;
     config.hasImage = doc["hasImage"] | false;
 
     Serial.println("[Storage] Configuración cargada con éxito");

@@ -198,6 +198,14 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         </div>
       </div>
 
+      <div class="form-group">
+        <label>Modo de Color para Fotos/Emojis (Swap Bytes)</label>
+        <div class="btn-group">
+          <button type="button" class="btn-opt selected" id="swapTrue" onclick="setSwapBytes(true)">Corregido (Normal)</button>
+          <button type="button" class="btn-opt" id="swapFalse" onclick="setSwapBytes(false)">Invertir</button>
+        </div>
+      </div>
+
       <div class="form-group" style="background:#12141f; padding:12px; border-radius:10px; font-size:0.85rem; color:var(--text-muted); line-height:1.5;">
         <strong style="color:var(--text);">💡 Consejos de uso:</strong><br>
         • <strong>Botón User (GPIO 14)</strong>: Mantén pulsado >1s para apagar la pantalla y entrar en modo reposo de bajo consumo.<br>
@@ -432,6 +440,22 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       }
     }
 
+    // Actualizar swap bytes de imagen
+    async function setSwapBytes(s) {
+      document.getElementById('swapTrue').classList.toggle('selected', s === true);
+      document.getElementById('swapFalse').classList.toggle('selected', s === false);
+      try {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ swapBytes: s })
+        });
+        showToast('🎨 Modo de color actualizado');
+      } catch(e) {
+        showToast('❌ Error al cambiar color');
+      }
+    }
+
     // Actualizar brillo
     let brightTimeout = null;
     function updateBrightness(val) {
@@ -482,6 +506,10 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
           if (data.rotation) {
             document.getElementById('rotNormal').classList.toggle('selected', data.rotation === 1);
             document.getElementById('rotInverted').classList.toggle('selected', data.rotation === 3);
+          }
+          if (data.swapBytes !== undefined) {
+            document.getElementById('swapTrue').classList.toggle('selected', data.swapBytes === true);
+            document.getElementById('swapFalse').classList.toggle('selected', data.swapBytes === false);
           }
           setMode(data.scrollMode !== false);
         }

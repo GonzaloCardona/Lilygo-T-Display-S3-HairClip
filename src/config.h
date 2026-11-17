@@ -71,5 +71,6 @@ struct HairClipConfig {
     bool scrollMode = true;         // true = en movimiento, false = estático
     uint8_t brightness = DEFAULT_BRIGHTNESS;
     uint8_t rotation = 1;           // 1 = normal landscape, 3 = landscape 180°
+    bool swapBytes = true;          // true = corrige orden de bytes RGB565 para fotos y emojis
     bool hasImage = false;          // true = muestra imagen, false = texto
 };

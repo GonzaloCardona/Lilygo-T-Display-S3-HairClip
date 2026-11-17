@@ -92,7 +92,7 @@ void DisplayManager::showScrollText(const String& text, uint32_t color, uint8_t 
     _tft.fillScreen(TFT_BLACK);
 }
 
-void DisplayManager::showImage(const uint16_t* data, uint16_t w, uint16_t h) {
+void DisplayManager::showImage(const uint16_t* data, uint16_t w, uint16_t h, bool swapBytes) {
     _scrolling = false;
     _tft.fillScreen(TFT_BLACK);
     
@@ -102,7 +102,9 @@ void DisplayManager::showImage(const uint16_t* data, uint16_t w, uint16_t h) {
     if (x < 0) x = 0;
     if (y < 0) y = 0;
 
+    _tft.setSwapBytes(swapBytes);
     _tft.pushImage(x, y, w, h, data);
+    _tft.setSwapBytes(false);
 }
 
 void DisplayManager::showConfigScreen(const char* ssid, const char* ip) {

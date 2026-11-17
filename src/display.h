@@ -85,7 +85,7 @@ public:
     uint8_t getRotation() const { return _rotation; }
     void showStaticText(const String& text, uint32_t color, uint8_t fontSize);
     void showScrollText(const String& text, uint32_t color, uint8_t fontSize, uint8_t speed);
-    void showImage(const uint16_t* data, uint16_t w, uint16_t h);
+    void showImage(const uint16_t* data, uint16_t w, uint16_t h, bool swapBytes = true);
     void showConfigScreen(const char* ssid, const char* ip);
     void showSleepScreen();
     void update();

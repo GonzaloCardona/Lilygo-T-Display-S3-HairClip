@@ -86,7 +86,7 @@ void applyConfig() {
         }
 
         if (imgBuf && storage.loadImage(imgBuf, imgSize)) {
-            display.showImage(imgBuf, SCREEN_WIDTH, SCREEN_HEIGHT);
+            display.showImage(imgBuf, SCREEN_WIDTH, SCREEN_HEIGHT, config.swapBytes);
             free(imgBuf);
             return;
         }
