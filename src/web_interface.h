@@ -96,7 +96,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
     <div id="tab-text" class="tab-content active">
       <div class="form-group">
         <label>Mensaje a mostrar</label>
-        <input type="text" id="clipText" value="🎀 HairClip ✨" oninput="updatePreview()" placeholder="Escribe tu texto...">
+        <input type="text" id="clipText" value="HairClip Digital" oninput="updatePreview()" placeholder="Escribe tu texto...">
       </div>
 
       <div class="form-group">
@@ -143,11 +143,17 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       <div class="form-group">
         <label>Vista previa simulada (320 × 170)</label>
         <div class="preview-box">
-          <div id="previewText" class="preview-text marquee">🎀 HairClip ✨</div>
+          <div id="previewText" class="preview-text marquee">HairClip Digital</div>
         </div>
       </div>
 
-      <button class="btn-primary" onclick="sendText()">🚀 Aplicar Texto a Pantalla</button>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn-primary" onclick="sendText()">🚀 Aplicar Texto</button>
+        <button class="btn-primary" style="background: linear-gradient(135deg, #ff4d8d, #8a2be2); box-shadow: 0 4px 14px rgba(138,43,226,0.35);" onclick="sendAsEmojiBanner()">🎨 Enviar como Cartel con Emojis Reales</button>
+      </div>
+      <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:8px; line-height:1.4;">
+        💡 <strong>Nota sobre Emojis:</strong> El chip del ESP32 procesa texto estándar. Para ver emojis en color real (🎀, ✨, ❤️, etc.), pulsa <em>"Cartel con Emojis Reales"</em> para que tu iPhone los dibuje en alta definición.
+      </p>
     </div>
 
     <!-- TAB 2: IMAGEN -->
@@ -181,6 +187,14 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         <div class="slider-container">
           <input type="range" id="clipBrightness" min="20" max="255" value="160" oninput="updateBrightness(this.value)">
           <span class="slider-val" id="brightVal">160</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Orientación de Pantalla (Girar 180°)</label>
+        <div class="btn-group">
+          <button type="button" class="btn-opt selected" id="rotNormal" onclick="setRotation(1)">Normal (USB derecha)</button>
+          <button type="button" class="btn-opt" id="rotInverted" onclick="setRotation(3)">Invertida (USB izquierda)</button>
         </div>
       </div>
 
@@ -288,6 +302,30 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       }
     }
 
+    // Renderizar texto con emojis nativos en Canvas y enviar
+    function sendAsEmojiBanner() {
+      const text = document.getElementById('clipText').value || ' ';
+      const color = document.getElementById('clipColor').value;
+      const canvas = document.getElementById('imageCanvas');
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, 320, 170);
+
+      // Calcular tamaño de fuente según currentFontSize (P: 26px, M: 36px, G: 48px, XL: 60px)
+      const fontSize = currentFontSize * 11 + 4;
+      ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      ctx.fillText(text, 160, 85);
+
+      selectedImage = true;
+      document.getElementById('btnUploadImage').disabled = false;
+      uploadImage();
+    }
+
     // Manejo y subida de imágenes con redimensión Canvas a 320x170 y conversión RGB565 en el iPhone
     function handleFileSelect(e) {
       const file = e.target.files[0];
@@ -378,6 +416,22 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       }
     }
 
+    // Actualizar rotación
+    async function setRotation(r) {
+      document.getElementById('rotNormal').classList.toggle('selected', r === 1);
+      document.getElementById('rotInverted').classList.toggle('selected', r === 3);
+      try {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rotation: r })
+        });
+        showToast('🔄 Pantalla girada');
+      } catch(e) {
+        showToast('❌ Error al girar pantalla');
+      }
+    }
+
     // Actualizar brillo
     let brightTimeout = null;
     function updateBrightness(val) {
@@ -424,6 +478,10 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
           if (data.brightness) {
             document.getElementById('clipBrightness').value = data.brightness;
             document.getElementById('brightVal').innerText = data.brightness;
+          }
+          if (data.rotation) {
+            document.getElementById('rotNormal').classList.toggle('selected', data.rotation === 1);
+            document.getElementById('rotInverted').classList.toggle('selected', data.rotation === 3);
           }
           setMode(data.scrollMode !== false);
         }

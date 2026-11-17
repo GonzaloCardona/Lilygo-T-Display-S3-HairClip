@@ -2,6 +2,7 @@
 
 DisplayManager::DisplayManager()
     : _scrollSprite(&_tft),
+      _rotation(1),
       _textColor(0xFFFFFF),
       _fontSize(3),
       _scrollSpeed(3),
@@ -21,7 +22,7 @@ void DisplayManager::begin() {
 
     // 2. Inicializar LovyanGFX
     _tft.init();
-    _tft.setRotation(1); // Modo horizontal (Landscape: 320 x 170)
+    _tft.setRotation(_rotation); // Modo horizontal (Landscape: 320 x 170)
     _tft.setBrightness(DEFAULT_BRIGHTNESS);
     _tft.fillScreen(TFT_BLACK);
 
@@ -33,6 +34,15 @@ void DisplayManager::begin() {
 
 void DisplayManager::setBrightness(uint8_t brightness) {
     _tft.setBrightness(brightness);
+}
+
+void DisplayManager::setRotation(uint8_t rotation) {
+    if (rotation != 1 && rotation != 3) rotation = 1;
+    _rotation = rotation;
+    _tft.setRotation(_rotation);
+    if (_scrolling) {
+        showScrollText(_currentText, _textColor, _fontSize, _scrollSpeed);
+    }
 }
 
 void DisplayManager::clear() {

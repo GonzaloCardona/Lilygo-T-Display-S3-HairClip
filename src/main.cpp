@@ -75,6 +75,7 @@ void enterSleep() {
 }
 
 void applyConfig() {
+    display.setRotation(config.rotation);
     display.setBrightness(config.brightness);
 
     if (config.hasImage && storage.hasImage()) {

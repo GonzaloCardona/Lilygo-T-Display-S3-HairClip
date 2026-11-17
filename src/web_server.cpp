@@ -82,6 +82,7 @@ void HairClipWebServer::handleStatus() {
     doc["scrollSpeed"] = _config->scrollSpeed;
     doc["scrollMode"] = _config->scrollMode;
     doc["brightness"] = _config->brightness;
+    doc["rotation"] = _config->rotation;
     doc["hasImage"] = _config->hasImage;
 
     String response;
@@ -134,6 +135,12 @@ void HairClipWebServer::handleSettings() {
     if (doc["brightness"].is<uint8_t>()) {
         _config->brightness = doc["brightness"].as<uint8_t>();
         if (_display) _display->setBrightness(_config->brightness);
+        if (_storage) _storage->saveConfig(*_config);
+    }
+
+    if (doc["rotation"].is<uint8_t>()) {
+        _config->rotation = doc["rotation"].as<uint8_t>();
+        if (_display) _display->setRotation(_config->rotation);
         if (_storage) _storage->saveConfig(*_config);
     }
 

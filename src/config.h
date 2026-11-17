@@ -64,11 +64,12 @@
 
 // Estructura de configuración persistente
 struct HairClipConfig {
-    String text = "🎀 HairClip ✨";
+    String text = "HairClip Digital";
     uint32_t color = 0xFF69B4;      // Hot pink (#FF69B4)
     uint8_t fontSize = 3;           // Escala de fuente (1 a 5)
     uint8_t scrollSpeed = 3;        // 1 a 10
     bool scrollMode = true;         // true = en movimiento, false = estático
     uint8_t brightness = DEFAULT_BRIGHTNESS;
+    uint8_t rotation = 1;           // 1 = normal landscape, 3 = landscape 180°
     bool hasImage = false;          // true = muestra imagen, false = texto
 };

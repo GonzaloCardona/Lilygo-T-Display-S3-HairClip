@@ -41,11 +41,11 @@ public:
             cfg.pin_cs   = PIN_LCD_CS;   // GPIO 6
             cfg.pin_rst  = PIN_LCD_RST;  // GPIO 5
             cfg.pin_busy = -1;
-            cfg.memory_width  = 170;
+            cfg.memory_width  = 240;     // GRAM real del ST7789 (240x320) para cálculo correcto de offset (35px)
             cfg.memory_height = 320;
             cfg.panel_width   = 170;
             cfg.panel_height  = 320;
-            cfg.offset_x      = 35;      // Compensación del ST7789V (framebuffer interno 240)
+            cfg.offset_x      = 35;      // Compensación horizontal del ST7789V (centrado)
             cfg.offset_y      = 0;
             cfg.offset_rotation = 0;
             cfg.dummy_read_pixel = 8;
@@ -81,6 +81,8 @@ public:
     DisplayManager();
     void begin();
     void setBrightness(uint8_t brightness);
+    void setRotation(uint8_t rotation);
+    uint8_t getRotation() const { return _rotation; }
     void showStaticText(const String& text, uint32_t color, uint8_t fontSize);
     void showScrollText(const String& text, uint32_t color, uint8_t fontSize, uint8_t speed);
     void showImage(const uint16_t* data, uint16_t w, uint16_t h);
@@ -95,6 +97,7 @@ public:
 private:
     LGFX _tft;
     LGFX_Sprite _scrollSprite;
+    uint8_t _rotation;
     String _currentText;
     uint32_t _textColor;
     uint8_t _fontSize;
