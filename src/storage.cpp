@@ -188,3 +188,10 @@ void StorageManager::deleteGif() {
         LittleFS.remove(GIF_FILE);
     }
 }
+
+size_t StorageManager::getFreeBytes() {
+    if (!_fsMounted) return 0;
+    size_t total = LittleFS.totalBytes();
+    size_t used = LittleFS.usedBytes();
+    return (total > used) ? (total - used) : 0;
+}

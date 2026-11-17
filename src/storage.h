@@ -30,6 +30,8 @@ public:
     bool loadGif(uint8_t* buffer, size_t maxBytes);
     void deleteGif();
 
+    size_t getFreeBytes();
+
 private:
     File _imgFile;
     File _gifFile;

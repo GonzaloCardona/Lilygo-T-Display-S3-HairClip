@@ -120,6 +120,7 @@ void HairClipWebServer::handleStatus() {
     doc["hasImage"] = _config->hasImage;
     doc["imgWidth"] = _config->imgWidth;
     doc["imgHeight"] = _config->imgHeight;
+    doc["freeSpace"] = _storage ? _storage->getFreeBytes() : 0;
 
     String response;
     serializeJson(doc, response);
@@ -240,7 +241,9 @@ void HairClipWebServer::handleGifUpload() {
         }
     } else if (upload.status == UPLOAD_FILE_WRITE) {
         if (_storage) {
-            _storage->writeGifChunk(upload.buf, upload.currentSize);
+            if (!_storage->writeGifChunk(upload.buf, upload.currentSize)) {
+                Serial.println("[WebServer] ERROR: Error de escritura en LittleFS (espacio insuficiente)");
+            }
         }
     } else if (upload.status == UPLOAD_FILE_END) {
         Serial.printf("[WebServer] Subida de GIF completada (%u bytes)\n", upload.totalSize);
@@ -256,6 +259,7 @@ void HairClipWebServer::handleGifUpload() {
         Serial.println("[WebServer] Subida de GIF cancelada o interrumpida");
         if (_storage) {
             _storage->closeGifFile();
+            _storage->deleteGif();
         }
     }
 }

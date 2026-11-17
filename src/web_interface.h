@@ -168,6 +168,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         <label class="file-btn" for="fileInput">📁 Seleccionar Foto o GIF desde iPhone</label>
         <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
         <div id="gifBadge" style="display:none; color:var(--accent); font-weight:700; font-size:0.83rem; margin-top:6px; text-align:center;">🎬 GIF Animado detectado</div>
+        <div id="freeSpaceInfo" style="font-size:0.78rem; color:var(--text-muted); text-align:center; margin-top:6px;"></div>
       </div>
 
       <div class="form-group" id="fitModeGroup">
@@ -291,6 +292,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
     let loadedImage = null;
     let selectedGifFile = null;
     let imageFitMode = 'cover';
+    let deviceFreeBytes = 0; // Espacio libre en LittleFS (actualizado al cargar)
     let imgBgColor = '#000000';
     let panX = 0; // -100 a +100
     let panY = 0; // -100 a +100
@@ -526,7 +528,13 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       const file = e.target.files[0];
       if (!file) return;
 
+      // Advertir si el archivo (solo para GIF, la foto se recorta a 108 KB fijo) supera el espacio libre
       const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+      if (isGif && deviceFreeBytes > 0 && file.size > deviceFreeBytes) {
+        const freeKB = (deviceFreeBytes / 1024).toFixed(0);
+        const fileKB = (file.size / 1024).toFixed(0);
+        showToast('⚠️ El GIF pesa ' + fileKB + ' KB pero solo hay ' + freeKB + ' KB libres en el dispositivo');
+      }
       selectedGifFile = isGif ? file : null;
 
       const reader = new FileReader();
@@ -743,6 +751,15 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
     // Subir archivo GIF animado directamente sin procesar
     async function uploadGifFile() {
       if (!selectedGifFile) return;
+
+      // Validar espacio antes de intentar subir
+      if (deviceFreeBytes > 0 && selectedGifFile.size > deviceFreeBytes) {
+        const freeKB = (deviceFreeBytes / 1024).toFixed(0);
+        const fileKB = (selectedGifFile.size / 1024).toFixed(0);
+        showToast('❌ No hay espacio suficiente: el GIF pesa ' + fileKB + ' KB y solo hay ' + freeKB + ' KB libres');
+        return;
+      }
+
       const btn = document.getElementById('btnUploadImage');
       btn.disabled = true;
       showToast('🎬 Subiendo GIF animado al dispositivo...');
@@ -886,6 +903,13 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
             document.getElementById('swapFalse').classList.toggle('selected', data.swapBytes === false);
           }
           setTextScrollMode(data.scrollMode !== false);
+          // Espacio libre en el dispositivo
+          if (data.freeSpace !== undefined) {
+            deviceFreeBytes = data.freeSpace;
+            const freeKB = (data.freeSpace / 1024).toFixed(0);
+            const el = document.getElementById('freeSpaceInfo');
+            if (el) el.innerText = 'Espacio libre en dispositivo: ' + freeKB + ' KB';
+          }
         }
       } catch(e) {}
     };
