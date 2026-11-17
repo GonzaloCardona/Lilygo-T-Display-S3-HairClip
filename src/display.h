@@ -1,5 +1,7 @@
 #pragma once
+#ifndef LGFX_USE_V1
 #define LGFX_USE_V1
+#endif
 #include <LovyanGFX.hpp>
 #include "config.h"
 
