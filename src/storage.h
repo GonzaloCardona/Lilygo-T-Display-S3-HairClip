@@ -21,7 +21,17 @@ public:
     bool hasImage();
     void deleteImage();
 
+    // Gestión de GIF animado
+    bool openGifForWriting();
+    bool writeGifChunk(const uint8_t* chunk, size_t len);
+    void closeGifFile();
+    bool hasGif();
+    size_t getGifSize();
+    bool loadGif(uint8_t* buffer, size_t maxBytes);
+    void deleteGif();
+
 private:
     File _imgFile;
+    File _gifFile;
     bool _fsMounted;
 };

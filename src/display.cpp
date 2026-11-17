@@ -20,7 +20,17 @@ DisplayManager::DisplayManager()
       _bannerSpeed(3),
       _bannerScroll(false),
       _bannerSwapBytes(true),
-      _bannerBgColor565(0) {}
+      _bannerBgColor565(0),
+      _gifData(nullptr),
+      _gifSize(0),
+      _playingGif(false),
+      _gifSwapBytes(true),
+      _gifWidth(0),
+      _gifHeight(0),
+      _gifOffsetX(0),
+      _gifOffsetY(0),
+      _gifBgColor565(0),
+      _nextGifFrameTime(0) {}
 
 void DisplayManager::begin() {
     // 1. Activar riel de alimentación (CRÍTICO)
@@ -48,17 +58,22 @@ void DisplayManager::setRotation(uint8_t rotation) {
     if (rotation != 1 && rotation != 3) rotation = 1;
     _rotation = rotation;
     _tft.setRotation(_rotation);
-    if (_scrolling) {
+    if (_playingGif) {
+        _tft.fillScreen(_gifBgColor565);
+        _gif.reset();
+    } else if (_scrolling) {
         showScrollText(_currentText, _textColor, _fontSize, _scrollSpeed);
     }
 }
 
 void DisplayManager::clear() {
+    stopGif();
     _scrolling = false;
     _tft.fillScreen(TFT_BLACK);
 }
 
 void DisplayManager::powerOff() {
+    stopGif();
     _scrolling = false;
     _tft.fillScreen(TFT_BLACK);
     _tft.setBrightness(0);
@@ -67,6 +82,7 @@ void DisplayManager::powerOff() {
 }
 
 void DisplayManager::showStaticText(const String& text, uint32_t color, uint8_t fontSize, uint32_t bgColor) {
+    stopGif();
     _bannerData = nullptr;
     _scrolling = false;
     _currentText = text;
@@ -87,6 +103,7 @@ void DisplayManager::showStaticText(const String& text, uint32_t color, uint8_t 
 }
 
 void DisplayManager::showScrollText(const String& text, uint32_t color, uint8_t fontSize, uint8_t speed, uint32_t bgColor) {
+    stopGif();
     _bannerData = nullptr;
     _currentText = text;
     _textColor = color;
@@ -107,6 +124,7 @@ void DisplayManager::showScrollText(const String& text, uint32_t color, uint8_t 
 }
 
 void DisplayManager::showImage(const uint16_t* data, uint16_t w, uint16_t h, bool swapBytes, uint32_t bgColor) {
+    stopGif();
     _bannerData = nullptr;
     _scrolling = false;
     
@@ -125,6 +143,7 @@ void DisplayManager::showImage(const uint16_t* data, uint16_t w, uint16_t h, boo
 }
 
 void DisplayManager::showBanner(const uint16_t* data, uint16_t w, uint16_t h, uint8_t speed, bool scroll, bool swapBytes, uint32_t bgColor) {
+    stopGif();
     _bannerData = data;
     _bannerWidth = w;
     _bannerHeight = h;
@@ -151,7 +170,112 @@ void DisplayManager::showBanner(const uint16_t* data, uint16_t w, uint16_t h, ui
     }
 }
 
+bool DisplayManager::startGif(const uint8_t* gifData, size_t gifSize, uint32_t bgColor, bool swapBytes) {
+    stopGif();
+    _scrolling = false;
+    _bannerData = nullptr;
+
+    _gifData = gifData;
+    _gifSize = gifSize;
+    _gifSwapBytes = swapBytes;
+
+    _gifBgColor565 = _tft.color565((bgColor >> 16) & 0xFF, (bgColor >> 8) & 0xFF, bgColor & 0xFF);
+    _tft.fillScreen(_gifBgColor565);
+
+    _gif.begin(LITTLE_ENDIAN_PIXELS);
+    if (!_gif.open((uint8_t*)_gifData, _gifSize, gifDrawCallback)) {
+        Serial.println("[Display] Error al abrir GIF con AnimatedGIF");
+        return false;
+    }
+
+    _gifWidth = _gif.getCanvasWidth();
+    _gifHeight = _gif.getCanvasHeight();
+    _gifOffsetX = (SCREEN_WIDTH - _gifWidth) / 2;
+    _gifOffsetY = (SCREEN_HEIGHT - _gifHeight) / 2;
+
+    _playingGif = true;
+    _nextGifFrameTime = millis();
+    Serial.printf("[Display] GIF iniciado con éxito: %dx%d (offset: %d, %d)\n", _gifWidth, _gifHeight, _gifOffsetX, _gifOffsetY);
+    return true;
+}
+
+void DisplayManager::stopGif() {
+    if (_playingGif) {
+        _gif.close();
+        _playingGif = false;
+    }
+}
+
+void DisplayManager::gifDrawCallback(GIFDRAW *pDraw) {
+    DisplayManager* self = (DisplayManager*)pDraw->pUser;
+    if (!self) return;
+
+    int startX = self->_gifOffsetX;
+    int startY = self->_gifOffsetY;
+
+    int y = pDraw->iY + pDraw->y + startY;
+    if (y < 0 || y >= SCREEN_HEIGHT) return;
+
+    int x = pDraw->iX + startX;
+    int iWidth = pDraw->iWidth;
+
+    int srcOffset = 0;
+    if (x < 0) {
+        srcOffset = -x;
+        iWidth -= srcOffset;
+        x = 0;
+    }
+    if (x + iWidth > SCREEN_WIDTH) {
+        iWidth = SCREEN_WIDTH - x;
+    }
+    if (iWidth <= 0) return;
+
+    uint8_t *s = pDraw->pPixels + srcOffset;
+    uint16_t *usPalette = pDraw->pPalette;
+    static uint16_t usTemp[SCREEN_WIDTH];
+
+    if (pDraw->ucDisposalMethod == 2) {
+        for (int i = 0; i < iWidth; i++) {
+            if (s[i] == pDraw->ucTransparent) {
+                s[i] = pDraw->ucBackground;
+            }
+        }
+        pDraw->ucHasTransparency = 0;
+    }
+
+    self->_tft.setSwapBytes(self->_gifSwapBytes);
+
+    if (pDraw->ucHasTransparency) {
+        uint8_t ucTransparent = pDraw->ucTransparent;
+        int runStartX = x;
+        int runLen = 0;
+        for (int i = 0; i < iWidth; i++) {
+            uint8_t c = s[i];
+            if (c == ucTransparent) {
+                if (runLen > 0) {
+                    self->_tft.pushImage(runStartX, y, runLen, 1, usTemp);
+                    runLen = 0;
+                }
+                runStartX = x + i + 1;
+            } else {
+                usTemp[runLen++] = usPalette[c];
+            }
+        }
+        if (runLen > 0) {
+            self->_tft.pushImage(runStartX, y, runLen, 1, usTemp);
+        }
+    } else {
+        for (int i = 0; i < iWidth; i++) {
+            usTemp[i] = usPalette[s[i]];
+        }
+        self->_tft.pushImage(x, y, iWidth, 1, usTemp);
+    }
+
+    self->_tft.setSwapBytes(false);
+}
+
 void DisplayManager::showConfigScreen(const char* ssid, const char* ip) {
+    stopGif();
     _scrolling = false;
     _tft.fillScreen(TFT_BLACK);
 
@@ -185,6 +309,7 @@ void DisplayManager::showConfigScreen(const char* ssid, const char* ip) {
 }
 
 void DisplayManager::showSleepScreen() {
+    stopGif();
     _scrolling = false;
     _tft.fillScreen(TFT_BLACK);
     _tft.setTextDatum(textdatum_t::middle_center);
@@ -194,6 +319,21 @@ void DisplayManager::showSleepScreen() {
 }
 
 void DisplayManager::update() {
+    if (_playingGif) {
+        unsigned long now = millis();
+        if (now >= _nextGifFrameTime) {
+            int delayMs = 50;
+            if (!_gif.playFrame(false, &delayMs, this)) {
+                _gif.reset();
+                _nextGifFrameTime = now;
+            } else {
+                if (delayMs <= 0) delayMs = 100;
+                _nextGifFrameTime = now + delayMs;
+            }
+        }
+        return;
+    }
+
     if (!_scrolling) return;
 
     unsigned long now = millis();

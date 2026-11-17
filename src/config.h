@@ -61,6 +61,12 @@
 // ==========================================
 #define CONFIG_FILE         "/config.json"
 #define IMAGE_FILE          "/image.raw"
+#define GIF_FILE            "/image.gif"
+
+// Tipos de contenido a mostrar
+#define CONTENT_TEXT        0
+#define CONTENT_IMAGE       1
+#define CONTENT_GIF         2
 
 // Estructura de configuración persistente
 struct HairClipConfig {
@@ -73,7 +79,8 @@ struct HairClipConfig {
     uint8_t brightness = DEFAULT_BRIGHTNESS;
     uint8_t rotation = 1;           // 1 = normal landscape, 3 = landscape 180°
     bool swapBytes = true;          // true = corrige orden de bytes RGB565 para fotos y emojis
-    bool hasImage = false;          // true = muestra imagen/banner, false = texto LGFX
+    uint8_t contentType = CONTENT_TEXT; // 0 = texto, 1 = imagen/banner, 2 = GIF animado
+    bool hasImage = false;          // Retrocompatibilidad
     uint16_t imgWidth = SCREEN_WIDTH;
     uint16_t imgHeight = SCREEN_HEIGHT;
 };

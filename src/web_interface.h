@@ -88,7 +88,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
 
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('text')">Texto & Emojis</button>
-      <button class="tab-btn" onclick="switchTab('image')">Foto / Imagen</button>
+      <button class="tab-btn" onclick="switchTab('image')">Foto / GIF</button>
       <button class="tab-btn" onclick="switchTab('settings')">Ajustes</button>
     </div>
 
@@ -161,15 +161,16 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       <button class="btn-primary" id="btnSendText" onclick="uploadTextBanner()">🚀 Enviar a Pantalla</button>
     </div>
 
-    <!-- TAB 2: IMAGEN -->
+    <!-- TAB 2: FOTO O GIF -->
     <div id="tab-image" class="tab-content">
       <div class="form-group">
-        <label>Elegir Imagen</label>
-        <label class="file-btn" for="fileInput">📁 Seleccionar Foto desde iPhone</label>
+        <label>Elegir Foto o GIF Animado</label>
+        <label class="file-btn" for="fileInput">📁 Seleccionar Foto o GIF desde iPhone</label>
         <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+        <div id="gifBadge" style="display:none; color:var(--accent); font-weight:700; font-size:0.83rem; margin-top:6px; text-align:center;">🎬 GIF Animado detectado</div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" id="fitModeGroup">
         <label>Modo de Ajuste</label>
         <div class="btn-group">
           <button type="button" class="btn-opt selected" id="fitCover" onclick="setImageFit('cover')">Recortar (Llenar)</button>
@@ -205,11 +206,11 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         </div>
       </div>
 
-      <!-- Color de fondo para bordes (Modo Ajustar/Contain) -->
+      <!-- Color de fondo para bordes (Modo Ajustar/Contain o GIF) -->
       <div class="form-group" id="imgBgGroup" style="display:none;">
-        <label>Color de Bordes</label>
+        <label>Color de Fondo / Bordes</label>
         <div class="color-row">
-          <input type="color" id="imgBgColor" value="#000000" onchange="renderImageCanvas()">
+          <input type="color" id="imgBgColor" value="#000000" onchange="onImgBgColorChange(this.value)">
           <div class="presets">
             <div class="chip" style="background:#000000" onclick="setImgBgColor('#000000')"></div>
             <div class="chip" style="background:#ffffff" onclick="setImgBgColor('#ffffff')"></div>
@@ -221,14 +222,15 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       </div>
 
       <div class="form-group">
-        <label>Vista Previa de Imagen (320 × 170 px)</label>
+        <label>Vista Previa (320 × 170 px)</label>
         <div class="screen-preview-wrap">
           <canvas id="imageCanvas" class="screen-canvas" width="320" height="170"></canvas>
+          <img id="gifPreview" style="display:none; width:100%; height:100%; object-fit:contain; border-radius:10px;">
           <div class="canvas-overlay-hint" id="dragHint">👆 Arrastra con el dedo para encuadrar</div>
         </div>
       </div>
 
-      <button class="btn-primary" id="btnUploadImage" onclick="uploadImageCanvas()" disabled>📤 Enviar Imagen a Pantalla</button>
+      <button class="btn-primary" id="btnUploadImage" onclick="onUploadMediaClick()" disabled>📤 Enviar a Pantalla</button>
     </div>
 
     <!-- TAB 3: AJUSTES -->
@@ -285,8 +287,9 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
     let previewScrollX = 0;
     let cachedBannerWidth = 320;
 
-    // Manejo de imagen
+    // Manejo de imagen y GIF
     let loadedImage = null;
+    let selectedGifFile = null;
     let imageFitMode = 'cover';
     let imgBgColor = '#000000';
     let panX = 0; // -100 a +100
@@ -517,21 +520,47 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
     }
 
     // ==========================================================
-    // 🖼️ TAB 2: IMAGEN CON DESPLAZAMIENTO & ENCUADRE
+    // 🖼️ TAB 2: IMAGEN Y GIF CON PREVIEW & CONTROLES
     // ==========================================================
     function handleFileSelect(e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+      selectedGifFile = isGif ? file : null;
+
       const reader = new FileReader();
       reader.onload = function(evt) {
-        const img = new Image();
-        img.onload = function() {
-          loadedImage = img;
-          resetPan();
-          renderImageCanvas();
+        if (isGif) {
+          loadedImage = null;
+          document.getElementById('gifBadge').style.display = 'block';
+          const gifEl = document.getElementById('gifPreview');
+          gifEl.style.display = 'block';
+          gifEl.src = evt.target.result;
+          gifEl.style.backgroundColor = imgBgColor;
+          document.getElementById('imageCanvas').style.display = 'none';
+          document.getElementById('dragHint').style.display = 'none';
+          document.getElementById('panControlsGroup').style.display = 'none';
+          document.getElementById('fitModeGroup').style.display = 'none';
+          document.getElementById('imgBgGroup').style.display = 'block';
+          document.getElementById('btnUploadImage').innerText = '🎬 Enviar GIF a Pantalla';
           document.getElementById('btnUploadImage').disabled = false;
-        };
-        img.src = evt.target.result;
+        } else {
+          selectedGifFile = null;
+          const img = new Image();
+          img.onload = function() {
+            loadedImage = img;
+            document.getElementById('gifBadge').style.display = 'none';
+            document.getElementById('gifPreview').style.display = 'none';
+            document.getElementById('imageCanvas').style.display = 'block';
+            document.getElementById('fitModeGroup').style.display = 'block';
+            document.getElementById('btnUploadImage').innerText = '📤 Enviar Foto a Pantalla';
+            resetPan();
+            setImageFit(imageFitMode);
+            document.getElementById('btnUploadImage').disabled = false;
+          };
+          img.src = evt.target.result;
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -546,10 +575,19 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       renderImageCanvas();
     }
 
+    function onImgBgColorChange(val) {
+      imgBgColor = val;
+      if (selectedGifFile) {
+        document.getElementById('gifPreview').style.backgroundColor = imgBgColor;
+      } else {
+        renderImageCanvas();
+      }
+    }
+
     function setImgBgColor(val) {
       imgBgColor = val;
       document.getElementById('imgBgColor').value = val;
-      renderImageCanvas();
+      onImgBgColorChange(val);
     }
 
     function onPanSliderChange() {
@@ -702,6 +740,42 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       }
     }
 
+    // Subir archivo GIF animado directamente sin procesar
+    async function uploadGifFile() {
+      if (!selectedGifFile) return;
+      const btn = document.getElementById('btnUploadImage');
+      btn.disabled = true;
+      showToast('🎬 Subiendo GIF animado al dispositivo...');
+
+      const bgHex = document.getElementById('imgBgColor').value.replace('#', '');
+      const url = `/api/gif?bg=${bgHex}`;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedGifFile, 'image.gif');
+
+        const res = await fetch(url, { method: 'POST', body: formData });
+        if (res.ok) {
+          showToast('✅ ¡GIF animado cargado con éxito!');
+        } else {
+          showToast('❌ Error al subir el GIF');
+        }
+      } catch (e) {
+        showToast('❌ Error de conexión al subir GIF');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Botón único para enviar foto o GIF
+    function onUploadMediaClick() {
+      if (selectedGifFile) {
+        uploadGifFile();
+      } else {
+        uploadImageCanvas();
+      }
+    }
+
     // ==========================================================
     // ⚙️ TAB 3: AJUSTES (ROTACIÓN, SWAP BYTES, BRILLO)
     // ==========================================================
@@ -786,6 +860,8 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
           if (data.bgColor !== undefined) {
             textBgColor = '#' + data.bgColor.toString(16).padStart(6, '0');
             document.getElementById('clipBgColor').value = textBgColor;
+            imgBgColor = textBgColor;
+            document.getElementById('imgBgColor').value = imgBgColor;
           }
           if (data.fontSize) {
             currentFontSize = data.fontSize;

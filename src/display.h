@@ -3,6 +3,7 @@
 #define LGFX_USE_V1
 #endif
 #include <LovyanGFX.hpp>
+#include <AnimatedGIF.h>
 #include "config.h"
 
 // ==============================================================
@@ -87,6 +88,9 @@ public:
     void showScrollText(const String& text, uint32_t color, uint8_t fontSize, uint8_t speed, uint32_t bgColor = 0x000000);
     void showImage(const uint16_t* data, uint16_t w, uint16_t h, bool swapBytes = true, uint32_t bgColor = 0x000000);
     void showBanner(const uint16_t* data, uint16_t w, uint16_t h, uint8_t speed, bool scroll, bool swapBytes, uint32_t bgColor);
+    bool startGif(const uint8_t* gifData, size_t gifSize, uint32_t bgColor = 0x000000, bool swapBytes = true);
+    void stopGif();
+    bool isPlayingGif() const { return _playingGif; }
     void showConfigScreen(const char* ssid, const char* ip);
     void showSleepScreen();
     void update();
@@ -96,6 +100,8 @@ public:
     LGFX& getTft() { return _tft; }
 
 private:
+    static void gifDrawCallback(GIFDRAW *pDraw);
+
     LGFX _tft;
     LGFX_Sprite _scrollSprite;
     uint8_t _rotation;
@@ -120,4 +126,17 @@ private:
     bool _bannerScroll;
     bool _bannerSwapBytes;
     uint16_t _bannerBgColor565;
+
+    // Reproductor de GIF animado en PSRAM
+    AnimatedGIF _gif;
+    const uint8_t* _gifData;
+    size_t _gifSize;
+    bool _playingGif;
+    bool _gifSwapBytes;
+    int _gifWidth;
+    int _gifHeight;
+    int _gifOffsetX;
+    int _gifOffsetY;
+    uint16_t _gifBgColor565;
+    unsigned long _nextGifFrameTime;
 };

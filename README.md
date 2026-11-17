@@ -35,6 +35,11 @@ Permite mostrar texto con emojis nativos a todo color y tildes en movimiento (*m
   - **Controles de precisión**: Sliders de desplazamiento horizontal (-100% a +100%), vertical (-100% a +100%) y zoom (100% a 300%).
   - Modos de visualización: **Recortar (Llenar pantalla)** o **Ajustar (Bordes rellenos)**.
   - Conversión automática en el navegador a formato binario nativo **RGB565 Little-Endian**, liberando de cómputo a la CPU del ESP32.
+- 🎬 **Soporte para GIFs animados**:
+  - Detección automática al seleccionar cualquier archivo `.gif` desde el carrete o archivos.
+  - Reproducción fluida y en bucle continuo en memoria PSRAM con la librería ultrarrápida **AnimatedGIF**.
+  - Respeta los tiempos entre fotogramas originales del GIF y la transparencia nativa.
+  - Bajo consumo: la CPU reposa entre fotogramas sin bloquear el sistema.
 - 🔋 **Ahorro extremo de batería (Bajo consumo)**:
   - El Wi-Fi y el servidor web solo están encendidos durante la configuración. En modo normal se apagan por completo.
   - **Modo Deep Sleep (~150-200 µA)**: apaga la pantalla, la retroiluminación y corta el riel de alimentación (`GPIO 15`) reteniendo el estado con `rtc_gpio_hold_en`.

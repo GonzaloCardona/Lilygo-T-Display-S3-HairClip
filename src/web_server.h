@@ -28,4 +28,5 @@ private:
     void handleSettings();
     void handleApply();
     void handleImageUpload();
+    void handleGifUpload();
 };

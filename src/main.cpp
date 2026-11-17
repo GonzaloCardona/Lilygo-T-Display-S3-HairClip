@@ -23,19 +23,22 @@ StorageManager storage;
 WiFiManager wifi;
 HairClipWebServer webServer;
 HairClipConfig config;
-uint16_t* bannerBuffer = nullptr;
+uint8_t* mediaBuffer = nullptr;
+size_t mediaBufferSize = 0;
 
 // Declaraciones de funciones
 void enterConfigMode();
 void exitConfigMode();
 void enterSleep();
 void applyConfig();
-void freeBannerBuffer();
+void freeMediaBuffer();
 
-void freeBannerBuffer() {
-    if (bannerBuffer != nullptr) {
-        free(bannerBuffer);
-        bannerBuffer = nullptr;
+void freeMediaBuffer() {
+    display.stopGif();
+    if (mediaBuffer != nullptr) {
+        free(mediaBuffer);
+        mediaBuffer = nullptr;
+        mediaBufferSize = 0;
     }
 }
 
@@ -48,7 +51,7 @@ void enterConfigMode() {
 
     Serial.println("[App] Entrando en Modo Configuración");
     currentState = STATE_CONFIG;
-    freeBannerBuffer();
+    freeMediaBuffer();
 
     wifi.startAP();
     webServer.begin(&display, &storage, &config, []() {
@@ -68,7 +71,7 @@ void exitConfigMode() {
 
 void enterSleep() {
     Serial.println("[App] Entrando en Deep Sleep...");
-    freeBannerBuffer();
+    freeMediaBuffer();
     display.showSleepScreen();
     delay(600);
 
@@ -89,21 +92,38 @@ void applyConfig() {
     display.setRotation(config.rotation);
     display.setBrightness(config.brightness);
 
-    freeBannerBuffer();
+    freeMediaBuffer();
 
-    if (config.hasImage && storage.hasImage()) {
+    if (config.contentType == CONTENT_GIF && storage.hasGif()) {
+        size_t gifSize = storage.getGifSize();
+        if (gifSize > 0) {
+            mediaBuffer = (uint8_t*)heap_caps_malloc(gifSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+            if (!mediaBuffer) {
+                mediaBuffer = (uint8_t*)malloc(gifSize);
+            }
+
+            if (mediaBuffer && storage.loadGif(mediaBuffer, gifSize)) {
+                mediaBufferSize = gifSize;
+                if (display.startGif(mediaBuffer, gifSize, config.bgColor, config.swapBytes)) {
+                    return;
+                }
+            }
+            freeMediaBuffer();
+        }
+    } else if (config.contentType == CONTENT_IMAGE && storage.hasImage()) {
         size_t fileSize = storage.getImageSize();
         if (fileSize > 0) {
-            bannerBuffer = (uint16_t*)heap_caps_malloc(fileSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-            if (!bannerBuffer) {
-                bannerBuffer = (uint16_t*)malloc(fileSize);
+            mediaBuffer = (uint8_t*)heap_caps_malloc(fileSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+            if (!mediaBuffer) {
+                mediaBuffer = (uint8_t*)malloc(fileSize);
             }
 
-            if (bannerBuffer && storage.loadImage(bannerBuffer, fileSize)) {
-                display.showBanner(bannerBuffer, config.imgWidth, config.imgHeight, config.scrollSpeed, config.scrollMode, config.swapBytes, config.bgColor);
+            if (mediaBuffer && storage.loadImage((uint16_t*)mediaBuffer, fileSize)) {
+                mediaBufferSize = fileSize;
+                display.showBanner((uint16_t*)mediaBuffer, config.imgWidth, config.imgHeight, config.scrollSpeed, config.scrollMode, config.swapBytes, config.bgColor);
                 return;
             }
-            freeBannerBuffer();
+            freeMediaBuffer();
         }
     }
 

@@ -62,6 +62,7 @@ void HairClipWebServer::setupRoutes() {
             if (_server.hasArg("text")) _config->text = _server.arg("text");
             if (_server.hasArg("fontSize")) _config->fontSize = _server.arg("fontSize").toInt();
             if (_server.hasArg("color")) _config->color = strtoul(_server.arg("color").c_str(), NULL, 16);
+            _config->contentType = CONTENT_IMAGE;
             _config->hasImage = true;
             if (_storage) _storage->saveConfig(*_config);
             Serial.printf("[WebServer] Imagen/Cartel procesado: %dx%d, scroll=%d, bg=#%06lX\n",
@@ -72,7 +73,23 @@ void HairClipWebServer::setupRoutes() {
         handleImageUpload();
     });
 
-    // 4. Captive portal catch-all
+    // 4. Subida de GIFs animados (multipart/form-data)
+    _server.on("/api/gif", HTTP_POST, [this]() {
+        if (_config) {
+            if (_server.hasArg("bg")) {
+                _config->bgColor = strtoul(_server.arg("bg").c_str(), NULL, 16);
+            }
+            _config->contentType = CONTENT_GIF;
+            _config->hasImage = false;
+            if (_storage) _storage->saveConfig(*_config);
+            Serial.printf("[WebServer] GIF configurado como activo (bg=#%06lX)\n", (unsigned long)_config->bgColor);
+        }
+        _server.send(200, "application/json", "{\"status\":\"ok\"}");
+    }, [this]() {
+        handleGifUpload();
+    });
+
+    // 5. Captive portal catch-all
     _server.onNotFound([this]() {
         _server.sendHeader("Location", "http://192.168.4.1/", true);
         _server.send(302, "text/plain", "");
@@ -99,6 +116,7 @@ void HairClipWebServer::handleStatus() {
     doc["brightness"] = _config->brightness;
     doc["rotation"] = _config->rotation;
     doc["swapBytes"] = _config->swapBytes;
+    doc["contentType"] = _config->contentType;
     doc["hasImage"] = _config->hasImage;
     doc["imgWidth"] = _config->imgWidth;
     doc["imgHeight"] = _config->imgHeight;
@@ -128,6 +146,7 @@ void HairClipWebServer::handleText() {
     if (doc["scrollSpeed"].is<uint8_t>()) _config->scrollSpeed = doc["scrollSpeed"].as<uint8_t>();
     if (doc["scrollMode"].is<bool>()) _config->scrollMode = doc["scrollMode"].as<bool>();
     
+    _config->contentType = CONTENT_TEXT;
     _config->hasImage = false; // El usuario eligió texto
 
     if (_storage) {
@@ -198,6 +217,7 @@ void HairClipWebServer::handleImageUpload() {
         if (_storage) {
             _storage->closeImageFile();
             if (_config) {
+                _config->contentType = CONTENT_IMAGE;
                 _config->hasImage = true;
                 _storage->saveConfig(*_config);
             }
@@ -206,6 +226,36 @@ void HairClipWebServer::handleImageUpload() {
         Serial.println("[WebServer] Subida de imagen cancelada o interrumpida");
         if (_storage) {
             _storage->closeImageFile();
+        }
+    }
+}
+
+void HairClipWebServer::handleGifUpload() {
+    HTTPUpload& upload = _server.upload();
+
+    if (upload.status == UPLOAD_FILE_START) {
+        Serial.printf("[WebServer] Inicio de subida de GIF: %s\n", upload.filename.c_str());
+        if (_storage) {
+            _storage->openGifForWriting();
+        }
+    } else if (upload.status == UPLOAD_FILE_WRITE) {
+        if (_storage) {
+            _storage->writeGifChunk(upload.buf, upload.currentSize);
+        }
+    } else if (upload.status == UPLOAD_FILE_END) {
+        Serial.printf("[WebServer] Subida de GIF completada (%u bytes)\n", upload.totalSize);
+        if (_storage) {
+            _storage->closeGifFile();
+            if (_config) {
+                _config->contentType = CONTENT_GIF;
+                _config->hasImage = false;
+                _storage->saveConfig(*_config);
+            }
+        }
+    } else if (upload.status == UPLOAD_FILE_ABORTED) {
+        Serial.println("[WebServer] Subida de GIF cancelada o interrumpida");
+        if (_storage) {
+            _storage->closeGifFile();
         }
     }
 }

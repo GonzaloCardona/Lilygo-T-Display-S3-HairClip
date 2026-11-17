@@ -32,6 +32,7 @@ bool StorageManager::saveConfig(const HairClipConfig& config) {
     doc["brightness"] = config.brightness;
     doc["rotation"] = config.rotation;
     doc["swapBytes"] = config.swapBytes;
+    doc["contentType"] = config.contentType;
     doc["hasImage"] = config.hasImage;
     doc["imgWidth"] = config.imgWidth;
     doc["imgHeight"] = config.imgHeight;
@@ -81,6 +82,11 @@ HairClipConfig StorageManager::loadConfig() {
     config.rotation = doc["rotation"] | 1;
     config.swapBytes = doc["swapBytes"] | true;
     config.hasImage = doc["hasImage"] | false;
+    if (doc["contentType"].is<uint8_t>()) {
+        config.contentType = doc["contentType"].as<uint8_t>();
+    } else {
+        config.contentType = config.hasImage ? CONTENT_IMAGE : CONTENT_TEXT;
+    }
     config.imgWidth = doc["imgWidth"] | SCREEN_WIDTH;
     config.imgHeight = doc["imgHeight"] | SCREEN_HEIGHT;
 
@@ -91,7 +97,7 @@ HairClipConfig StorageManager::loadConfig() {
 bool StorageManager::openImageForWriting() {
     if (!_fsMounted) return false;
     _imgFile = LittleFS.open(IMAGE_FILE, "w");
-    return _imgFile;
+    return (bool)_imgFile;
 }
 
 bool StorageManager::writeImageChunk(const uint8_t* chunk, size_t len) {
@@ -134,5 +140,51 @@ bool StorageManager::hasImage() {
 void StorageManager::deleteImage() {
     if (_fsMounted && LittleFS.exists(IMAGE_FILE)) {
         LittleFS.remove(IMAGE_FILE);
+    }
+}
+
+bool StorageManager::openGifForWriting() {
+    if (!_fsMounted) return false;
+    _gifFile = LittleFS.open(GIF_FILE, "w");
+    return (bool)_gifFile;
+}
+
+bool StorageManager::writeGifChunk(const uint8_t* chunk, size_t len) {
+    if (!_gifFile) return false;
+    return _gifFile.write(chunk, len) == len;
+}
+
+void StorageManager::closeGifFile() {
+    if (_gifFile) {
+        _gifFile.close();
+        Serial.println("[Storage] Archivo GIF guardado en LittleFS");
+    }
+}
+
+bool StorageManager::hasGif() {
+    return _fsMounted && LittleFS.exists(GIF_FILE);
+}
+
+size_t StorageManager::getGifSize() {
+    if (!_fsMounted || !hasGif()) return 0;
+    File file = LittleFS.open(GIF_FILE, "r");
+    if (!file) return 0;
+    size_t sz = file.size();
+    file.close();
+    return sz;
+}
+
+bool StorageManager::loadGif(uint8_t* buffer, size_t maxBytes) {
+    if (!_fsMounted || !hasGif()) return false;
+    File file = LittleFS.open(GIF_FILE, "r");
+    if (!file) return false;
+    size_t bytesRead = file.read(buffer, maxBytes);
+    file.close();
+    return bytesRead > 0;
+}
+
+void StorageManager::deleteGif() {
+    if (_fsMounted && LittleFS.exists(GIF_FILE)) {
+        LittleFS.remove(GIF_FILE);
     }
 }
