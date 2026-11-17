@@ -83,9 +83,10 @@ public:
     void setBrightness(uint8_t brightness);
     void setRotation(uint8_t rotation);
     uint8_t getRotation() const { return _rotation; }
-    void showStaticText(const String& text, uint32_t color, uint8_t fontSize);
-    void showScrollText(const String& text, uint32_t color, uint8_t fontSize, uint8_t speed);
-    void showImage(const uint16_t* data, uint16_t w, uint16_t h, bool swapBytes = true);
+    void showStaticText(const String& text, uint32_t color, uint8_t fontSize, uint32_t bgColor = 0x000000);
+    void showScrollText(const String& text, uint32_t color, uint8_t fontSize, uint8_t speed, uint32_t bgColor = 0x000000);
+    void showImage(const uint16_t* data, uint16_t w, uint16_t h, bool swapBytes = true, uint32_t bgColor = 0x000000);
+    void showBanner(const uint16_t* data, uint16_t w, uint16_t h, uint8_t speed, bool scroll, bool swapBytes, uint32_t bgColor);
     void showConfigScreen(const char* ssid, const char* ip);
     void showSleepScreen();
     void update();
@@ -100,6 +101,7 @@ private:
     uint8_t _rotation;
     String _currentText;
     uint32_t _textColor;
+    uint32_t _bgColor;
     uint8_t _fontSize;
     uint8_t _scrollSpeed;
     bool _scrolling;
@@ -109,4 +111,13 @@ private:
     int _spriteY;
     int _spriteHeight;
     unsigned long _lastScrollUpdate;
+
+    // Cartel/Banner en PSRAM para emojis, fuentes nativas e imágenes con scroll
+    const uint16_t* _bannerData;
+    uint16_t _bannerWidth;
+    uint16_t _bannerHeight;
+    uint8_t _bannerSpeed;
+    bool _bannerScroll;
+    bool _bannerSwapBytes;
+    uint16_t _bannerBgColor565;
 };

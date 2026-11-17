@@ -23,12 +23,21 @@ StorageManager storage;
 WiFiManager wifi;
 HairClipWebServer webServer;
 HairClipConfig config;
+uint16_t* bannerBuffer = nullptr;
 
 // Declaraciones de funciones
 void enterConfigMode();
 void exitConfigMode();
 void enterSleep();
 void applyConfig();
+void freeBannerBuffer();
+
+void freeBannerBuffer() {
+    if (bannerBuffer != nullptr) {
+        free(bannerBuffer);
+        bannerBuffer = nullptr;
+    }
+}
 
 void enterConfigMode() {
     if (currentState == STATE_CONFIG) {
@@ -39,6 +48,7 @@ void enterConfigMode() {
 
     Serial.println("[App] Entrando en Modo Configuración");
     currentState = STATE_CONFIG;
+    freeBannerBuffer();
 
     wifi.startAP();
     webServer.begin(&display, &storage, &config, []() {
@@ -58,6 +68,7 @@ void exitConfigMode() {
 
 void enterSleep() {
     Serial.println("[App] Entrando en Deep Sleep...");
+    freeBannerBuffer();
     display.showSleepScreen();
     delay(600);
 
@@ -78,27 +89,28 @@ void applyConfig() {
     display.setRotation(config.rotation);
     display.setBrightness(config.brightness);
 
+    freeBannerBuffer();
+
     if (config.hasImage && storage.hasImage()) {
-        size_t imgSize = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t);
-        uint16_t* imgBuf = (uint16_t*)heap_caps_malloc(imgSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-        if (!imgBuf) {
-            imgBuf = (uint16_t*)malloc(imgSize);
-        }
+        size_t fileSize = storage.getImageSize();
+        if (fileSize > 0) {
+            bannerBuffer = (uint16_t*)heap_caps_malloc(fileSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+            if (!bannerBuffer) {
+                bannerBuffer = (uint16_t*)malloc(fileSize);
+            }
 
-        if (imgBuf && storage.loadImage(imgBuf, imgSize)) {
-            display.showImage(imgBuf, SCREEN_WIDTH, SCREEN_HEIGHT, config.swapBytes);
-            free(imgBuf);
-            return;
+            if (bannerBuffer && storage.loadImage(bannerBuffer, fileSize)) {
+                display.showBanner(bannerBuffer, config.imgWidth, config.imgHeight, config.scrollSpeed, config.scrollMode, config.swapBytes, config.bgColor);
+                return;
+            }
+            freeBannerBuffer();
         }
-
-        if (imgBuf) free(imgBuf);
-        // Si falló cargar la imagen, se continúa con texto
     }
 
     if (config.scrollMode) {
-        display.showScrollText(config.text, config.color, config.fontSize, config.scrollSpeed);
+        display.showScrollText(config.text, config.color, config.fontSize, config.scrollSpeed, config.bgColor);
     } else {
-        display.showStaticText(config.text, config.color, config.fontSize);
+        display.showStaticText(config.text, config.color, config.fontSize, config.bgColor);
     }
 }
 

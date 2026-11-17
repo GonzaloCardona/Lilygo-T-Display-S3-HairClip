@@ -25,6 +25,7 @@ bool StorageManager::saveConfig(const HairClipConfig& config) {
     JsonDocument doc;
     doc["text"] = config.text;
     doc["color"] = config.color;
+    doc["bgColor"] = config.bgColor;
     doc["fontSize"] = config.fontSize;
     doc["scrollSpeed"] = config.scrollSpeed;
     doc["scrollMode"] = config.scrollMode;
@@ -32,6 +33,8 @@ bool StorageManager::saveConfig(const HairClipConfig& config) {
     doc["rotation"] = config.rotation;
     doc["swapBytes"] = config.swapBytes;
     doc["hasImage"] = config.hasImage;
+    doc["imgWidth"] = config.imgWidth;
+    doc["imgHeight"] = config.imgHeight;
 
     if (serializeJson(doc, file) == 0) {
         Serial.println("[Storage] Error al serializar config.json");
@@ -70,13 +73,16 @@ HairClipConfig StorageManager::loadConfig() {
 
     config.text = doc["text"] | "🎀 HairClip ✨";
     config.color = doc["color"] | 0xFF69B4;
-    config.fontSize = doc["fontSize"] | 3;
+    config.bgColor = doc["bgColor"] | 0x000000;
+    config.fontSize = doc["fontSize"] | 44;
     config.scrollSpeed = doc["scrollSpeed"] | 3;
     config.scrollMode = doc["scrollMode"] | true;
     config.brightness = doc["brightness"] | DEFAULT_BRIGHTNESS;
     config.rotation = doc["rotation"] | 1;
     config.swapBytes = doc["swapBytes"] | true;
     config.hasImage = doc["hasImage"] | false;
+    config.imgWidth = doc["imgWidth"] | SCREEN_WIDTH;
+    config.imgHeight = doc["imgHeight"] | SCREEN_HEIGHT;
 
     Serial.println("[Storage] Configuración cargada con éxito");
     return config;
@@ -110,6 +116,15 @@ bool StorageManager::loadImage(uint16_t* buffer, size_t maxBytes) {
     file.close();
 
     return bytesRead > 0;
+}
+
+size_t StorageManager::getImageSize() {
+    if (!_fsMounted || !hasImage()) return 0;
+    File file = LittleFS.open(IMAGE_FILE, "r");
+    if (!file) return 0;
+    size_t sz = file.size();
+    file.close();
+    return sz;
 }
 
 bool StorageManager::hasImage() {

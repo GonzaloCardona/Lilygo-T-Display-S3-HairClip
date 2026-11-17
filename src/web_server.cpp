@@ -51,8 +51,22 @@ void HairClipWebServer::setupRoutes() {
     _server.on("/api/settings", HTTP_POST, [this]() { handleSettings(); });
     _server.on("/api/apply", HTTP_POST, [this]() { handleApply(); });
 
-    // 3. Subida de imágenes (multipart/form-data)
+    // 3. Subida de imágenes y carteles raw (multipart/form-data)
     _server.on("/api/image", HTTP_POST, [this]() {
+        if (_config) {
+            if (_server.hasArg("w")) _config->imgWidth = _server.arg("w").toInt();
+            if (_server.hasArg("h")) _config->imgHeight = _server.arg("h").toInt();
+            if (_server.hasArg("scroll")) _config->scrollMode = (_server.arg("scroll") == "1" || _server.arg("scroll") == "true");
+            if (_server.hasArg("speed")) _config->scrollSpeed = _server.arg("speed").toInt();
+            if (_server.hasArg("bg")) _config->bgColor = strtoul(_server.arg("bg").c_str(), NULL, 16);
+            if (_server.hasArg("text")) _config->text = _server.arg("text");
+            if (_server.hasArg("fontSize")) _config->fontSize = _server.arg("fontSize").toInt();
+            if (_server.hasArg("color")) _config->color = strtoul(_server.arg("color").c_str(), NULL, 16);
+            _config->hasImage = true;
+            if (_storage) _storage->saveConfig(*_config);
+            Serial.printf("[WebServer] Imagen/Cartel procesado: %dx%d, scroll=%d, bg=#%06lX\n",
+                          _config->imgWidth, _config->imgHeight, _config->scrollMode, (unsigned long)_config->bgColor);
+        }
         _server.send(200, "application/json", "{\"status\":\"ok\"}");
     }, [this]() {
         handleImageUpload();
@@ -78,6 +92,7 @@ void HairClipWebServer::handleStatus() {
     JsonDocument doc;
     doc["text"] = _config->text;
     doc["color"] = _config->color;
+    doc["bgColor"] = _config->bgColor;
     doc["fontSize"] = _config->fontSize;
     doc["scrollSpeed"] = _config->scrollSpeed;
     doc["scrollMode"] = _config->scrollMode;
@@ -85,6 +100,8 @@ void HairClipWebServer::handleStatus() {
     doc["rotation"] = _config->rotation;
     doc["swapBytes"] = _config->swapBytes;
     doc["hasImage"] = _config->hasImage;
+    doc["imgWidth"] = _config->imgWidth;
+    doc["imgHeight"] = _config->imgHeight;
 
     String response;
     serializeJson(doc, response);
@@ -106,6 +123,7 @@ void HairClipWebServer::handleText() {
 
     if (doc["text"].is<String>()) _config->text = doc["text"].as<String>();
     if (doc["color"].is<uint32_t>()) _config->color = doc["color"].as<uint32_t>();
+    if (doc["bgColor"].is<uint32_t>()) _config->bgColor = doc["bgColor"].as<uint32_t>();
     if (doc["fontSize"].is<uint8_t>()) _config->fontSize = doc["fontSize"].as<uint8_t>();
     if (doc["scrollSpeed"].is<uint8_t>()) _config->scrollSpeed = doc["scrollSpeed"].as<uint8_t>();
     if (doc["scrollMode"].is<bool>()) _config->scrollMode = doc["scrollMode"].as<bool>();
@@ -116,7 +134,7 @@ void HairClipWebServer::handleText() {
         _storage->saveConfig(*_config);
     }
 
-    Serial.printf("[WebServer] Texto actualizado: '%s', color: #%06X\n", _config->text.c_str(), _config->color);
+    Serial.printf("[WebServer] Texto actualizado: '%s', color: #%06lX\n", _config->text.c_str(), (unsigned long)_config->color);
     _server.send(200, "application/json", "{\"status\":\"ok\"}");
 }
 

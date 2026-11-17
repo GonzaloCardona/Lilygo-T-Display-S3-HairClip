@@ -66,11 +66,14 @@
 struct HairClipConfig {
     String text = "HairClip Digital";
     uint32_t color = 0xFF69B4;      // Hot pink (#FF69B4)
-    uint8_t fontSize = 3;           // Escala de fuente (1 a 5)
+    uint32_t bgColor = 0x000000;    // Fondo negro (#000000) por defecto
+    uint8_t fontSize = 44;          // Tamaño de fuente en px (20 a 90)
     uint8_t scrollSpeed = 3;        // 1 a 10
     bool scrollMode = true;         // true = en movimiento, false = estático
     uint8_t brightness = DEFAULT_BRIGHTNESS;
     uint8_t rotation = 1;           // 1 = normal landscape, 3 = landscape 180°
     bool swapBytes = true;          // true = corrige orden de bytes RGB565 para fotos y emojis
-    bool hasImage = false;          // true = muestra imagen, false = texto
+    bool hasImage = false;          // true = muestra imagen/banner, false = texto LGFX
+    uint16_t imgWidth = SCREEN_WIDTH;
+    uint16_t imgHeight = SCREEN_HEIGHT;
 };

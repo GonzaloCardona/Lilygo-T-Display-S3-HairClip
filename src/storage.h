@@ -17,6 +17,7 @@ public:
     void closeImageFile();
 
     bool loadImage(uint16_t* buffer, size_t maxBytes);
+    size_t getImageSize();
     bool hasImage();
     void deleteImage();
 

@@ -10,188 +10,238 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
   <title>🎀 HairClip Control</title>
   <style>
     :root {
-      --bg: #0f111a;
-      --card: #181b26;
+      --bg: #0d0f17;
+      --card: #161924;
       --accent: #ff4d8d;
-      --accent-glow: rgba(255, 77, 141, 0.35);
+      --accent-glow: rgba(255, 77, 141, 0.4);
       --text: #f0f3fa;
       --text-muted: #8c93aa;
-      --border: #282c3c;
+      --border: #262a3d;
       --success: #00e676;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 14px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-    .container { width: 100%; max-width: 420px; }
-    header { text-align: center; margin-bottom: 16px; }
-    header h1 { font-size: 1.5rem; color: var(--accent); font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 0 16px var(--accent-glow); }
-    header p { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 12px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 430px; }
+    header { text-align: center; margin-bottom: 14px; }
+    header h1 { font-size: 1.45rem; color: var(--accent); font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 0 16px var(--accent-glow); }
+    header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
 
     /* Tabs */
-    .nav-tabs { display: flex; background: var(--card); border-radius: 12px; padding: 4px; margin-bottom: 16px; border: 1px solid var(--border); }
-    .tab-btn { flex: 1; padding: 10px 0; background: none; border: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+    .nav-tabs { display: flex; background: var(--card); border-radius: 12px; padding: 4px; margin-bottom: 14px; border: 1px solid var(--border); }
+    .tab-btn { flex: 1; padding: 9px 0; background: none; border: none; color: var(--text-muted); font-size: 0.88rem; font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
     .tab-btn.active { background: var(--accent); color: white; box-shadow: 0 2px 8px var(--accent-glow); }
 
     /* Card Panels */
-    .tab-content { display: none; background: var(--card); border-radius: 16px; padding: 18px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.4); margin-bottom: 16px; }
-    .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+    .tab-content { display: none; background: var(--card); border-radius: 16px; padding: 16px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.4); margin-bottom: 14px; }
+    .tab-content.active { display: block; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-    .form-group { margin-bottom: 16px; }
-    label { display: block; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 8px; }
-    input[type="text"] { width: 100%; padding: 12px 14px; background: #12141f; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1rem; outline: none; }
+    .form-group { margin-bottom: 14px; }
+    label { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
+    .label-badge { color: var(--accent); font-size: 0.82rem; font-weight: 700; text-transform: none; }
+    input[type="text"] { width: 100%; padding: 11px 13px; background: #10121d; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1rem; outline: none; }
     input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
 
-    /* Mode toggles */
+    /* Button Toggles */
     .btn-group { display: flex; gap: 8px; }
-    .btn-opt { flex: 1; padding: 10px; background: #12141f; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
-    .btn-opt.selected { background: rgba(255, 77, 141, 0.15); border-color: var(--accent); color: var(--accent); }
+    .btn-opt { flex: 1; padding: 9px; background: #10121d; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.15s; }
+    .btn-opt.selected { background: rgba(255, 77, 141, 0.18); border-color: var(--accent); color: var(--accent); font-weight: 700; }
 
-    /* Color picker & presets */
-    .color-row { display: flex; align-items: center; gap: 10px; }
-    input[type="color"] { -webkit-appearance: none; border: none; width: 44px; height: 44px; border-radius: 10px; cursor: pointer; background: transparent; }
+    /* Color Pickers */
+    .color-row { display: flex; align-items: center; gap: 8px; }
+    input[type="color"] { -webkit-appearance: none; border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; background: transparent; }
     input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
     input[type="color"]::-webkit-color-swatch { border: 2px solid var(--border); border-radius: 10px; }
     .presets { display: flex; gap: 6px; flex-wrap: wrap; }
-    .chip { width: 32px; height: 32px; border-radius: 8px; border: 2px solid var(--border); cursor: pointer; }
+    .chip { width: 28px; height: 28px; border-radius: 7px; border: 1.5px solid var(--border); cursor: pointer; transition: transform 0.1s; }
+    .chip:active { transform: scale(0.9); }
 
     /* Sliders */
-    .slider-container { display: flex; align-items: center; gap: 12px; }
-    input[type="range"] { flex: 1; accent-color: var(--accent); }
-    .slider-val { width: 32px; text-align: right; font-size: 0.9rem; font-weight: 700; color: var(--accent); }
+    .slider-container { display: flex; align-items: center; gap: 10px; }
+    input[type="range"] { flex: 1; accent-color: var(--accent); height: 6px; border-radius: 3px; background: #222638; outline: none; }
+    .slider-val { min-width: 38px; text-align: right; font-size: 0.85rem; font-weight: 700; color: var(--accent); }
 
-    /* Live Preview Screen (320:170 ratio) */
-    .preview-box { width: 100%; aspect-ratio: 320 / 170; background: black; border-radius: 12px; border: 2px solid var(--border); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
-    .preview-text { white-space: nowrap; font-weight: 700; position: absolute; font-size: 20px; }
-    .marquee { animation: marquee linear infinite; }
-    @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-
-    /* Image upload canvas */
-    #imageCanvas { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); background: black; }
-    .file-btn { display: block; text-align: center; width: 100%; padding: 12px; background: #212536; border: 1px dashed var(--accent); border-radius: 10px; color: var(--text); font-weight: 600; cursor: pointer; }
-    input[type="file"] { display: none; }
+    /* Screen Canvas Previews (Aspect 320x170) */
+    .screen-preview-wrap { position: relative; width: 100%; aspect-ratio: 320 / 170; background: #000; border-radius: 12px; border: 2px solid var(--border); overflow: hidden; box-shadow: inset 0 0 15px rgba(0,0,0,0.9); margin-top: 4px; }
+    .screen-canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+    .canvas-overlay-hint { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.65); padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; color: #cbd5e1; pointer-events: none; }
 
     /* Action Buttons */
-    .btn-primary { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 12px; color: white; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px var(--accent-glow); transition: 0.2s; }
+    .btn-primary { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: 12px; color: white; font-size: 0.98rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px var(--accent-glow); transition: 0.15s; }
     .btn-primary:active { transform: scale(0.98); }
-    .btn-save { width: 100%; padding: 14px; background: #12141f; border: 1px solid var(--success); border-radius: 12px; color: var(--success); font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-save { width: 100%; padding: 13px; background: #10121d; border: 1px solid var(--success); border-radius: 12px; color: var(--success); font-size: 0.98rem; font-weight: 700; cursor: pointer; margin-top: 6px; }
 
-    /* Toast */
-    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #242938; color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid var(--border); display: none; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    .file-btn { display: block; text-align: center; width: 100%; padding: 11px; background: #1c2030; border: 1px dashed var(--accent); border-radius: 10px; color: var(--text); font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    input[type="file"] { display: none; }
+
+    /* Toast Notification */
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1f2333; color: white; padding: 9px 18px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid var(--border); display: none; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>🎀 HairClip Digital</h1>
-      <p>Control portátil para LilyGO T-Display S3</p>
+      <p>LilyGO T-Display S3 • Control Inalámbrico</p>
     </header>
 
     <div class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('text')">Texto</button>
-      <button class="tab-btn" onclick="switchTab('image')">Imagen</button>
+      <button class="tab-btn active" onclick="switchTab('text')">Texto & Emojis</button>
+      <button class="tab-btn" onclick="switchTab('image')">Foto / Imagen</button>
       <button class="tab-btn" onclick="switchTab('settings')">Ajustes</button>
     </div>
 
     <!-- TAB 1: TEXTO -->
     <div id="tab-text" class="tab-content active">
       <div class="form-group">
-        <label>Mensaje a mostrar</label>
-        <input type="text" id="clipText" value="HairClip Digital" oninput="updatePreview()" placeholder="Escribe tu texto...">
+        <label>Mensaje (con tildes, ñ y emojis)</label>
+        <input type="text" id="clipText" value="🎀 ¡Hola España! ✨" oninput="onTextInput()" placeholder="Escribe tu texto o emojis...">
       </div>
 
       <div class="form-group">
-        <label>Modo de animación</label>
+        <label>Modo de Pantalla</label>
         <div class="btn-group">
-          <button type="button" class="btn-opt" id="modeStatic" onclick="setMode(false)">Estático</button>
-          <button type="button" class="btn-opt selected" id="modeScroll" onclick="setMode(true)">En Movimiento</button>
+          <button type="button" class="btn-opt" id="modeStatic" onclick="setTextScrollMode(false)">Estático (Centrado)</button>
+          <button type="button" class="btn-opt selected" id="modeScroll" onclick="setTextScrollMode(true)">En Movimiento (Scroll)</button>
         </div>
       </div>
 
       <div class="form-group">
-        <label>Color del texto</label>
+        <label>Tamaño de Letra <span class="label-badge" id="fontSizeBadge">44 px</span></label>
+        <div class="slider-container">
+          <input type="range" id="clipFontSize" min="20" max="90" value="44" oninput="onFontSizeInput(this.value)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Color del Texto</label>
         <div class="color-row">
-          <input type="color" id="clipColor" value="#ff69b4" onchange="updatePreview()">
+          <input type="color" id="clipTextColor" value="#ff69b4" onchange="onTextColorChange(this.value)">
           <div class="presets">
-            <div class="chip" style="background:#ff69b4" onclick="setColor('#ff69b4')"></div>
-            <div class="chip" style="background:#00f5d4" onclick="setColor('#00f5d4')"></div>
-            <div class="chip" style="background:#fee440" onclick="setColor('#fee440')"></div>
-            <div class="chip" style="background:#9b5de5" onclick="setColor('#9b5de5')"></div>
-            <div class="chip" style="background:#ff595e" onclick="setColor('#ff595e')"></div>
-            <div class="chip" style="background:#ffffff" onclick="setColor('#ffffff')"></div>
+            <div class="chip" style="background:#ff69b4" onclick="setTextColor('#ff69b4')"></div>
+            <div class="chip" style="background:#00f5d4" onclick="setTextColor('#00f5d4')"></div>
+            <div class="chip" style="background:#fee440" onclick="setTextColor('#fee440')"></div>
+            <div class="chip" style="background:#9b5de5" onclick="setTextColor('#9b5de5')"></div>
+            <div class="chip" style="background:#ff595e" onclick="setTextColor('#ff595e')"></div>
+            <div class="chip" style="background:#ffffff" onclick="setTextColor('#ffffff')"></div>
           </div>
         </div>
       </div>
 
       <div class="form-group">
-        <label>Tamaño de letra</label>
-        <div class="btn-group">
-          <button type="button" class="btn-opt" onclick="setSize(2, this)">P</button>
-          <button type="button" class="btn-opt selected" onclick="setSize(3, this)">M</button>
-          <button type="button" class="btn-opt" onclick="setSize(4, this)">G</button>
-          <button type="button" class="btn-opt" onclick="setSize(5, this)">XL</button>
+        <label>Color de Fondo</label>
+        <div class="color-row">
+          <input type="color" id="clipBgColor" value="#000000" onchange="onBgColorChange(this.value)">
+          <div class="presets">
+            <div class="chip" style="background:#000000" onclick="setTextBgColor('#000000')"></div>
+            <div class="chip" style="background:#1a102f" onclick="setTextBgColor('#1a102f')"></div>
+            <div class="chip" style="background:#2b0938" onclick="setTextBgColor('#2b0938')"></div>
+            <div class="chip" style="background:#ff69b4" onclick="setTextBgColor('#ff69b4')"></div>
+            <div class="chip" style="background:#003366" onclick="setTextBgColor('#003366')"></div>
+            <div class="chip" style="background:#ffffff" onclick="setTextBgColor('#ffffff')"></div>
+          </div>
         </div>
       </div>
 
       <div class="form-group" id="speedGroup">
-        <label>Velocidad de movimiento</label>
+        <label>Velocidad de Movimiento <span class="label-badge" id="speedVal">3</span></label>
         <div class="slider-container">
           <input type="range" id="clipSpeed" min="1" max="10" value="3" oninput="updateSpeedVal(this.value)">
-          <span class="slider-val" id="speedVal">3</span>
         </div>
       </div>
 
       <div class="form-group">
-        <label>Vista previa simulada (320 × 170)</label>
-        <div class="preview-box">
-          <div id="previewText" class="preview-text marquee">HairClip Digital</div>
+        <label>Vista Previa Exacta (320 × 170 px)</label>
+        <div class="screen-preview-wrap">
+          <canvas id="textPreviewCanvas" class="screen-canvas" width="320" height="170"></canvas>
         </div>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <button class="btn-primary" onclick="sendText()">🚀 Aplicar Texto</button>
-        <button class="btn-primary" style="background: linear-gradient(135deg, #ff4d8d, #8a2be2); box-shadow: 0 4px 14px rgba(138,43,226,0.35);" onclick="sendAsEmojiBanner()">🎨 Enviar como Cartel con Emojis Reales</button>
-      </div>
-      <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:8px; line-height:1.4;">
-        💡 <strong>Nota sobre Emojis:</strong> El chip del ESP32 procesa texto estándar. Para ver emojis en color real (🎀, ✨, ❤️, etc.), pulsa <em>"Cartel con Emojis Reales"</em> para que tu iPhone los dibuje en alta definición.
-      </p>
+      <button class="btn-primary" id="btnSendText" onclick="uploadTextBanner()">🚀 Enviar a Pantalla</button>
     </div>
 
     <!-- TAB 2: IMAGEN -->
     <div id="tab-image" class="tab-content">
       <div class="form-group">
-        <label>Seleccionar imagen</label>
-        <label class="file-btn" for="fileInput">📁 Elegir Foto desde iPhone</label>
+        <label>Elegir Imagen</label>
+        <label class="file-btn" for="fileInput">📁 Seleccionar Foto desde iPhone</label>
         <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
       </div>
 
       <div class="form-group">
-        <label>Ajuste de imagen</label>
+        <label>Modo de Ajuste</label>
         <div class="btn-group">
           <button type="button" class="btn-opt selected" id="fitCover" onclick="setImageFit('cover')">Recortar (Llenar)</button>
           <button type="button" class="btn-opt" id="fitContain" onclick="setImageFit('contain')">Ajustar (Bordes)</button>
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Vista previa redimensionada (320 × 170)</label>
-        <canvas id="imageCanvas" width="320" height="170"></canvas>
+      <!-- Controles de Desplazamiento y Zoom (Modo Recortar/Cover) -->
+      <div id="panControlsGroup">
+        <div class="form-group">
+          <label>Desplazamiento Horizontal <span class="label-badge" id="panXBadge">0%</span></label>
+          <div class="slider-container">
+            <input type="range" id="panXSlider" min="-100" max="100" value="0" oninput="onPanSliderChange()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Desplazamiento Vertical <span class="label-badge" id="panYBadge">0%</span></label>
+          <div class="slider-container">
+            <input type="range" id="panYSlider" min="-100" max="100" value="0" oninput="onPanSliderChange()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Zoom / Escala <span class="label-badge" id="zoomBadge">100%</span></label>
+          <div class="slider-container">
+            <input type="range" id="zoomSlider" min="100" max="300" value="100" oninput="onZoomSliderChange()">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px; text-align: right;">
+          <button type="button" class="btn-opt" style="padding: 6px 14px; font-size: 0.8rem;" onclick="resetPan()">🔄 Centrar Encuadre</button>
+        </div>
       </div>
 
-      <button class="btn-primary" id="btnUploadImage" onclick="uploadImage()" disabled>📤 Enviar Imagen a Pantalla</button>
+      <!-- Color de fondo para bordes (Modo Ajustar/Contain) -->
+      <div class="form-group" id="imgBgGroup" style="display:none;">
+        <label>Color de Bordes</label>
+        <div class="color-row">
+          <input type="color" id="imgBgColor" value="#000000" onchange="renderImageCanvas()">
+          <div class="presets">
+            <div class="chip" style="background:#000000" onclick="setImgBgColor('#000000')"></div>
+            <div class="chip" style="background:#ffffff" onclick="setImgBgColor('#ffffff')"></div>
+            <div class="chip" style="background:#ff69b4" onclick="setImgBgColor('#ff69b4')"></div>
+            <div class="chip" style="background:#00f5d4" onclick="setImgBgColor('#00f5d4')"></div>
+            <div class="chip" style="background:#9b5de5" onclick="setImgBgColor('#9b5de5')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Vista Previa de Imagen (320 × 170 px)</label>
+        <div class="screen-preview-wrap">
+          <canvas id="imageCanvas" class="screen-canvas" width="320" height="170"></canvas>
+          <div class="canvas-overlay-hint" id="dragHint">👆 Arrastra con el dedo para encuadrar</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btnUploadImage" onclick="uploadImageCanvas()" disabled>📤 Enviar Imagen a Pantalla</button>
     </div>
 
     <!-- TAB 3: AJUSTES -->
     <div id="tab-settings" class="tab-content">
       <div class="form-group">
-        <label>Brillo de Pantalla</label>
+        <label>Brillo de Pantalla <span class="label-badge" id="brightVal">160</span></label>
         <div class="slider-container">
           <input type="range" id="clipBrightness" min="20" max="255" value="160" oninput="updateBrightness(this.value)">
-          <span class="slider-val" id="brightVal">160</span>
         </div>
       </div>
 
       <div class="form-group">
-        <label>Orientación de Pantalla (Girar 180°)</label>
+        <label>Orientación de Pantalla</label>
         <div class="btn-group">
           <button type="button" class="btn-opt selected" id="rotNormal" onclick="setRotation(1)">Normal (USB derecha)</button>
           <button type="button" class="btn-opt" id="rotInverted" onclick="setRotation(3)">Invertida (USB izquierda)</button>
@@ -199,18 +249,18 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       </div>
 
       <div class="form-group">
-        <label>Modo de Color para Fotos/Emojis (Swap Bytes)</label>
+        <label>Orden de Color RGB565 (Swap Bytes)</label>
         <div class="btn-group">
           <button type="button" class="btn-opt selected" id="swapTrue" onclick="setSwapBytes(true)">Corregido (Normal)</button>
           <button type="button" class="btn-opt" id="swapFalse" onclick="setSwapBytes(false)">Invertir</button>
         </div>
       </div>
 
-      <div class="form-group" style="background:#12141f; padding:12px; border-radius:10px; font-size:0.85rem; color:var(--text-muted); line-height:1.5;">
-        <strong style="color:var(--text);">💡 Consejos de uso:</strong><br>
-        • <strong>Botón User (GPIO 14)</strong>: Mantén pulsado >1s para apagar la pantalla y entrar en modo reposo de bajo consumo.<br>
-        • <strong>Para despertar</strong>: Vuelve a presionar el botón User.<br>
-        • <strong>Botón BOOT (GPIO 0)</strong>: Pulsa para volver a levantar esta red WiFi.
+      <div class="form-group" style="background:#10121d; padding:12px; border-radius:10px; font-size:0.83rem; color:var(--text-muted); line-height:1.5;">
+        <strong style="color:var(--text);">💡 Botones físicos:</strong><br>
+        • <strong>Botón User (GPIO 14)</strong>: Mantén pulsado >1.2s para suspender en reposo profundo (pantalla apagada).<br>
+        • <strong>Despertar</strong>: Vuelve a presionar el botón User.<br>
+        • <strong>Botón BOOT (GPIO 0)</strong>: Pulsa para activar el WiFi y entrar a esta web.
       </div>
     </div>
 
@@ -221,120 +271,254 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
   <div id="toast"></div>
 
   <script>
+    // ==========================================================
+    // 🎀 ESTADO GLOBAL
+    // ==========================================================
     let isScroll = true;
-    let currentFontSize = 3;
-    let selectedImage = null;
-    let imageFitMode = 'cover';
+    let currentFontSize = 44;
+    let textColor = '#ff69b4';
+    let textBgColor = '#000000';
+    let scrollSpeed = 3;
 
+    // Animación de preview de texto
+    let textPreviewAnimId = null;
+    let previewScrollX = 0;
+    let cachedBannerWidth = 320;
+
+    // Manejo de imagen
+    let loadedImage = null;
+    let imageFitMode = 'cover';
+    let imgBgColor = '#000000';
+    let panX = 0; // -100 a +100
+    let panY = 0; // -100 a +100
+    let zoomLevel = 1.0; // 1.0 a 3.0
+
+    // Touch / Drag en Canvas de imagen
+    let isDragging = false;
+    let dragStartX = 0, dragStartY = 0;
+    let panStartX = 0, panStartY = 0;
+
+    // ==========================================================
+    // 🗂️ GESTIÓN DE TABS
+    // ==========================================================
     function switchTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       event.target.classList.add('active');
       document.getElementById('tab-' + tabId).classList.add('active');
+
+      if (tabId === 'text') {
+        startTextPreviewLoop();
+      } else {
+        stopTextPreviewLoop();
+        if (tabId === 'image') renderImageCanvas();
+      }
     }
 
-    function setMode(scroll) {
+    // ==========================================================
+    // 📝 TAB 1: TEXTO, EMOJIS & PREVIEW EXACTA
+    // ==========================================================
+    function onTextInput() {
+      previewScrollX = 0;
+      updateTextBannerMetrics();
+    }
+
+    function setTextScrollMode(scroll) {
       isScroll = scroll;
       document.getElementById('modeScroll').classList.toggle('selected', scroll);
       document.getElementById('modeStatic').classList.toggle('selected', !scroll);
       document.getElementById('speedGroup').style.display = scroll ? 'block' : 'none';
-      updatePreview();
+      previewScrollX = 0;
+      updateTextBannerMetrics();
     }
 
-    function setColor(color) {
-      document.getElementById('clipColor').value = color;
-      updatePreview();
+    function onFontSizeInput(val) {
+      currentFontSize = parseInt(val);
+      document.getElementById('fontSizeBadge').innerText = val + ' px';
+      previewScrollX = 0;
+      updateTextBannerMetrics();
     }
 
-    function setSize(size, btn) {
-      currentFontSize = size;
-      btn.parentElement.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      updatePreview();
+    function onTextColorChange(val) {
+      textColor = val;
+      updateTextBannerMetrics();
+    }
+
+    function setTextColor(val) {
+      textColor = val;
+      document.getElementById('clipTextColor').value = val;
+      updateTextBannerMetrics();
+    }
+
+    function onBgColorChange(val) {
+      textBgColor = val;
+      updateTextBannerMetrics();
+    }
+
+    function setTextBgColor(val) {
+      textBgColor = val;
+      document.getElementById('clipBgColor').value = val;
+      updateTextBannerMetrics();
     }
 
     function updateSpeedVal(val) {
+      scrollSpeed = parseInt(val);
       document.getElementById('speedVal').innerText = val;
-      const duration = (11 - val) * 0.8;
-      document.getElementById('previewText').style.animationDuration = duration + 's';
     }
 
-    function updatePreview() {
+    function updateTextBannerMetrics() {
       const text = document.getElementById('clipText').value || ' ';
-      const color = document.getElementById('clipColor').value;
-      const preview = document.getElementById('previewText');
-      preview.innerText = text;
-      preview.style.color = color;
-      preview.style.fontSize = (currentFontSize * 7 + 4) + 'px';
+      const canvas = document.getElementById('textPreviewCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.font = `bold ${currentFontSize}px -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI Emoji", Roboto, sans-serif`;
+      const textMetrics = ctx.measureText(text);
+      const textW = Math.ceil(textMetrics.width);
 
       if (isScroll) {
-        preview.classList.add('marquee');
-        updateSpeedVal(document.getElementById('clipSpeed').value);
+        cachedBannerWidth = Math.max(320, textW + 80);
       } else {
-        preview.classList.remove('marquee');
+        cachedBannerWidth = 320;
       }
     }
 
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.innerText = msg;
-      t.style.display = 'block';
-      setTimeout(() => t.style.display = 'none', 3000);
+    function startTextPreviewLoop() {
+      if (textPreviewAnimId) cancelAnimationFrame(textPreviewAnimId);
+      updateTextBannerMetrics();
+
+      function step() {
+        renderTextPreviewFrame();
+        textPreviewAnimId = requestAnimationFrame(step);
+      }
+      textPreviewAnimId = requestAnimationFrame(step);
     }
 
-    // Enviar configuración de texto
-    async function sendText() {
-      const text = document.getElementById('clipText').value;
-      const colorHex = document.getElementById('clipColor').value.replace('#', '');
-      const color = parseInt(colorHex, 16);
-      const speed = parseInt(document.getElementById('clipSpeed').value);
-
-      const payload = {
-        text: text,
-        color: color,
-        fontSize: currentFontSize,
-        scrollSpeed: speed,
-        scrollMode: isScroll
-      };
-
-      try {
-        const res = await fetch('/api/text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) showToast('✅ Texto aplicado en pantalla');
-        else showToast('❌ Error al enviar');
-      } catch (e) {
-        showToast('❌ Error de conexión');
+    function stopTextPreviewLoop() {
+      if (textPreviewAnimId) {
+        cancelAnimationFrame(textPreviewAnimId);
+        textPreviewAnimId = null;
       }
     }
 
-    // Renderizar texto con emojis nativos en Canvas y enviar
-    function sendAsEmojiBanner() {
-      const text = document.getElementById('clipText').value || ' ';
-      const color = document.getElementById('clipColor').value;
-      const canvas = document.getElementById('imageCanvas');
+    function renderTextPreviewFrame() {
+      const canvas = document.getElementById('textPreviewCanvas');
       const ctx = canvas.getContext('2d');
+      const cw = 320, ch = 170;
 
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, 320, 170);
+      // 1. Limpiar fondo con color exacto
+      ctx.fillStyle = textBgColor;
+      ctx.fillRect(0, 0, cw, ch);
 
-      // Calcular tamaño de fuente según currentFontSize (P: 26px, M: 36px, G: 48px, XL: 60px)
-      const fontSize = currentFontSize * 11 + 4;
-      ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
-      ctx.fillStyle = color;
-      ctx.textAlign = 'center';
+      const text = document.getElementById('clipText').value || ' ';
+      ctx.font = `bold ${currentFontSize}px -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI Emoji", Roboto, sans-serif`;
+      ctx.fillStyle = textColor;
       ctx.textBaseline = 'middle';
 
-      ctx.fillText(text, 160, 85);
+      if (!isScroll) {
+        // Estático: Centrado
+        ctx.textAlign = 'center';
+        ctx.fillText(text, cw / 2, ch / 2);
+      } else {
+        // En movimiento: Marquee continuo exacto como en el ESP32
+        ctx.textAlign = 'left';
+        const gap = 60;
+        
+        ctx.fillText(text, previewScrollX + 20, ch / 2);
 
-      selectedImage = true;
-      document.getElementById('btnUploadImage').disabled = false;
-      uploadImage();
+        const nextX = previewScrollX + cachedBannerWidth + gap;
+        if (nextX < cw) {
+          ctx.fillText(text, nextX + 20, ch / 2);
+        }
+
+        // Avance según velocidad
+        const stepPx = (scrollSpeed * 0.7);
+        previewScrollX -= stepPx;
+        if (previewScrollX <= -(cachedBannerWidth + gap)) {
+          previewScrollX += (cachedBannerWidth + gap);
+        }
+      }
     }
 
-    // Manejo y subida de imágenes con redimensión Canvas a 320x170 y conversión RGB565 en el iPhone
+    // Convertir canvas a RGB565 Little-Endian binario
+    function canvasToRGB565(canvas) {
+      const ctx = canvas.getContext('2d');
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      const buffer = new Uint8Array(canvas.width * canvas.height * 2);
+      let p = 0;
+      for (let i = 0; i < imgData.length; i += 4) {
+        const r = imgData[i];
+        const g = imgData[i + 1];
+        const b = imgData[i + 2];
+        const rgb565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+        buffer[p++] = rgb565 & 0xFF;
+        buffer[p++] = (rgb565 >> 8) & 0xFF;
+      }
+      return buffer;
+    }
+
+    // Enviar cartel de texto/emojis a la pantalla
+    async function uploadTextBanner() {
+      const btn = document.getElementById('btnSendText');
+      btn.disabled = true;
+      showToast('⏳ Generando cartel con emojis y tildes...');
+
+      const text = document.getElementById('clipText').value || ' ';
+      const offCanvas = document.createElement('canvas');
+      offCanvas.height = 170;
+
+      const offCtx = offCanvas.getContext('2d');
+      offCtx.font = `bold ${currentFontSize}px -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI Emoji", Roboto, sans-serif`;
+      const textW = Math.ceil(offCtx.measureText(text).width);
+
+      if (isScroll) {
+        offCanvas.width = Math.max(320, textW + 80);
+      } else {
+        offCanvas.width = 320;
+      }
+
+      // Dibujar fondo
+      offCtx.fillStyle = textBgColor;
+      offCtx.fillRect(0, 0, offCanvas.width, 170);
+
+      // Dibujar texto/emojis
+      offCtx.font = `bold ${currentFontSize}px -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI Emoji", Roboto, sans-serif`;
+      offCtx.fillStyle = textColor;
+      offCtx.textBaseline = 'middle';
+
+      if (isScroll) {
+        offCtx.textAlign = 'left';
+        offCtx.fillText(text, 20, 85);
+      } else {
+        offCtx.textAlign = 'center';
+        offCtx.fillText(text, offCanvas.width / 2, 85);
+      }
+
+      // Generar RGB565
+      const rgbBuffer = canvasToRGB565(offCanvas);
+      const bgHex = textBgColor.replace('#', '');
+      const colorHex = textColor.replace('#', '');
+      const url = `/api/image?w=${offCanvas.width}&h=170&scroll=${isScroll ? 1 : 0}&speed=${scrollSpeed}&bg=${bgHex}&fontSize=${currentFontSize}&color=${colorHex}&text=${encodeURIComponent(text)}`;
+
+      try {
+        const blob = new Blob([rgbBuffer], { type: 'application/octet-stream' });
+        const formData = new FormData();
+        formData.append('file', blob, 'banner.raw');
+
+        const res = await fetch(url, { method: 'POST', body: formData });
+        if (res.ok) {
+          showToast('✅ ¡Cartel enviado a pantalla con éxito!');
+        } else {
+          showToast('❌ Error en el envío');
+        }
+      } catch (e) {
+        showToast('❌ Error de conexión con el ESP32');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ==========================================================
+    // 🖼️ TAB 2: IMAGEN CON DESPLAZAMIENTO & ENCUADRE
+    // ==========================================================
     function handleFileSelect(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -342,8 +526,9 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       reader.onload = function(evt) {
         const img = new Image();
         img.onload = function() {
-          selectedImage = img;
-          renderCanvas();
+          loadedImage = img;
+          resetPan();
+          renderImageCanvas();
           document.getElementById('btnUploadImage').disabled = false;
         };
         img.src = evt.target.result;
@@ -355,76 +540,171 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       imageFitMode = mode;
       document.getElementById('fitCover').classList.toggle('selected', mode === 'cover');
       document.getElementById('fitContain').classList.toggle('selected', mode === 'contain');
-      if (selectedImage) renderCanvas();
+      document.getElementById('panControlsGroup').style.display = (mode === 'cover') ? 'block' : 'none';
+      document.getElementById('imgBgGroup').style.display = (mode === 'contain') ? 'block' : 'none';
+      document.getElementById('dragHint').style.display = (mode === 'cover') ? 'block' : 'none';
+      renderImageCanvas();
     }
 
-    function renderCanvas() {
-      if (!selectedImage) return;
+    function setImgBgColor(val) {
+      imgBgColor = val;
+      document.getElementById('imgBgColor').value = val;
+      renderImageCanvas();
+    }
+
+    function onPanSliderChange() {
+      panX = parseInt(document.getElementById('panXSlider').value);
+      panY = parseInt(document.getElementById('panYSlider').value);
+      document.getElementById('panXBadge').innerText = panX + '%';
+      document.getElementById('panYBadge').innerText = panY + '%';
+      renderImageCanvas();
+    }
+
+    function onZoomSliderChange() {
+      const zVal = parseInt(document.getElementById('zoomSlider').value);
+      zoomLevel = zVal / 100.0;
+      document.getElementById('zoomBadge').innerText = zVal + '%';
+      renderImageCanvas();
+    }
+
+    function resetPan() {
+      panX = 0;
+      panY = 0;
+      zoomLevel = 1.0;
+      document.getElementById('panXSlider').value = 0;
+      document.getElementById('panYSlider').value = 0;
+      document.getElementById('zoomSlider').value = 100;
+      document.getElementById('panXBadge').innerText = '0%';
+      document.getElementById('panYBadge').innerText = '0%';
+      document.getElementById('zoomBadge').innerText = '100%';
+      renderImageCanvas();
+    }
+
+    // Renderizar imagen en canvas con pan, zoom y color de bordes
+    function renderImageCanvas() {
       const canvas = document.getElementById('imageCanvas');
       const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, 320, 170);
+      const cw = 320, ch = 170;
 
-      const iw = selectedImage.width;
-      const ih = selectedImage.height;
-      const cw = 320;
-      const ch = 170;
+      // Fondo
+      const bg = (imageFitMode === 'contain') ? document.getElementById('imgBgColor').value : '#000000';
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, cw, ch);
 
-      let dx = 0, dy = 0, dw = cw, dh = ch;
+      if (!loadedImage) return;
+
+      const iw = loadedImage.width;
+      const ih = loadedImage.height;
 
       if (imageFitMode === 'cover') {
-        const scale = Math.max(cw / iw, ch / ih);
-        dw = iw * scale;
-        dh = ih * scale;
-        dx = (cw - dw) / 2;
-        dy = (ch - dh) / 2;
-      } else {
-        const scale = Math.min(cw / iw, ch / ih);
-        dw = iw * scale;
-        dh = ih * scale;
-        dx = (cw - dw) / 2;
-        dy = (ch - dh) / 2;
-      }
+        const baseScale = Math.max(cw / iw, ch / ih);
+        const finalScale = baseScale * zoomLevel;
+        const dw = iw * finalScale;
+        const dh = ih * finalScale;
 
-      ctx.drawImage(selectedImage, dx, dy, dw, dh);
+        // Rango de desplazamiento
+        const maxOffsetX = Math.max(0, (dw - cw) / 2);
+        const maxOffsetY = Math.max(0, (dh - ch) / 2);
+
+        const offsetX = (panX / 100.0) * maxOffsetX;
+        const offsetY = (panY / 100.0) * maxOffsetY;
+
+        const dx = (cw - dw) / 2 + offsetX;
+        const dy = (ch - dh) / 2 + offsetY;
+
+        ctx.drawImage(loadedImage, dx, dy, dw, dh);
+      } else {
+        // Modo Contain: encaja dentro de 320x170, bordes rellenos de imgBgColor
+        const scale = Math.min(cw / iw, ch / ih);
+        const dw = iw * scale;
+        const dh = ih * scale;
+        const dx = (cw - dw) / 2;
+        const dy = (ch - dh) / 2;
+        ctx.drawImage(loadedImage, dx, dy, dw, dh);
+      }
     }
 
-    async function uploadImage() {
-      const canvas = document.getElementById('imageCanvas');
-      const ctx = canvas.getContext('2d');
-      const imgData = ctx.getImageData(0, 0, 320, 170).data;
+    // Touch & Mouse Drag para encuadrar la foto interactivamente
+    const imgCanvas = document.getElementById('imageCanvas');
+    function startDrag(clientX, clientY) {
+      if (!loadedImage || imageFitMode !== 'cover') return;
+      isDragging = true;
+      dragStartX = clientX;
+      dragStartY = clientY;
+      panStartX = panX;
+      panStartY = panY;
+    }
+    function moveDrag(clientX, clientY) {
+      if (!isDragging) return;
+      const deltaX = clientX - dragStartX;
+      const deltaY = clientY - dragStartY;
 
-      // Convertir RGBA (4 bytes) a RGB565 (2 bytes little-endian)
-      const buffer = new Uint8Array(320 * 170 * 2);
-      let p = 0;
-      for (let i = 0; i < imgData.length; i += 4) {
-        const r = imgData[i];
-        const g = imgData[i + 1];
-        const b = imgData[i + 2];
-        const rgb565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
-        // Little endian
-        buffer[p++] = rgb565 & 0xFF;
-        buffer[p++] = (rgb565 >> 8) & 0xFF;
+      // Sensibilidad del arrastre
+      let newPanX = panStartX + (deltaX / 1.2);
+      let newPanY = panStartY + (deltaY / 1.2);
+
+      newPanX = Math.max(-100, Math.min(100, newPanX));
+      newPanY = Math.max(-100, Math.min(100, newPanY));
+
+      panX = Math.round(newPanX);
+      panY = Math.round(newPanY);
+
+      document.getElementById('panXSlider').value = panX;
+      document.getElementById('panYSlider').value = panY;
+      document.getElementById('panXBadge').innerText = panX + '%';
+      document.getElementById('panYBadge').innerText = panY + '%';
+      renderImageCanvas();
+    }
+    function endDrag() { isDragging = false; }
+
+    imgCanvas.addEventListener('mousedown', e => startDrag(e.clientX, e.clientY));
+    window.addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
+    window.addEventListener('mouseup', endDrag);
+
+    imgCanvas.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        startDrag(e.touches[0].clientX, e.touches[0].clientY);
       }
+    }, { passive: true });
+    window.addEventListener('touchmove', e => {
+      if (isDragging && e.touches.length === 1) {
+        moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+    window.addEventListener('touchend', endDrag);
 
-      showToast('📤 Subiendo imagen...');
+    // Subir imagen encuadrada a pantalla
+    async function uploadImageCanvas() {
+      const btn = document.getElementById('btnUploadImage');
+      btn.disabled = true;
+      showToast('📤 Subiendo imagen encuadrada...');
+
+      const canvas = document.getElementById('imageCanvas');
+      const rgbBuffer = canvasToRGB565(canvas);
+      const bgHex = ((imageFitMode === 'contain') ? document.getElementById('imgBgColor').value : '#000000').replace('#', '');
+      const url = `/api/image?w=320&h=170&scroll=0&bg=${bgHex}`;
+
       try {
-        const blob = new Blob([buffer], { type: 'application/octet-stream' });
+        const blob = new Blob([rgbBuffer], { type: 'application/octet-stream' });
         const formData = new FormData();
         formData.append('file', blob, 'image.raw');
 
-        const res = await fetch('/api/image', {
-          method: 'POST',
-          body: formData
-        });
-        if (res.ok) showToast('✅ Imagen cargada en pantalla');
-        else showToast('❌ Error en subida de imagen');
+        const res = await fetch(url, { method: 'POST', body: formData });
+        if (res.ok) {
+          showToast('✅ ¡Imagen cargada en pantalla!');
+        } else {
+          showToast('❌ Error al subir imagen');
+        }
       } catch (e) {
         showToast('❌ Error de conexión al subir imagen');
+      } finally {
+        btn.disabled = false;
       }
     }
 
-    // Actualizar rotación
+    // ==========================================================
+    // ⚙️ TAB 3: AJUSTES (ROTACIÓN, SWAP BYTES, BRILLO)
+    // ==========================================================
     async function setRotation(r) {
       document.getElementById('rotNormal').classList.toggle('selected', r === 1);
       document.getElementById('rotInverted').classList.toggle('selected', r === 3);
@@ -440,7 +720,6 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       }
     }
 
-    // Actualizar swap bytes de imagen
     async function setSwapBytes(s) {
       document.getElementById('swapTrue').classList.toggle('selected', s === true);
       document.getElementById('swapFalse').classList.toggle('selected', s === false);
@@ -456,7 +735,6 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       }
     }
 
-    // Actualizar brillo
     let brightTimeout = null;
     function updateBrightness(val) {
       document.getElementById('brightVal').innerText = val;
@@ -472,32 +750,52 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       }, 100);
     }
 
-    // Guardar y salir
+    // ==========================================================
+    // 💾 GUARDAR Y SALIR
+    // ==========================================================
     async function applyAndExit() {
       try {
         await fetch('/api/apply', { method: 'POST' });
-        showToast('💾 Guardado. WiFi apagándose...');
+        showToast('💾 Guardado. Apagando WiFi y volviendo a mostrar...');
       } catch (e) {
         showToast('💾 Guardado y listo.');
       }
     }
 
-    // Inicializar valores al cargar
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    // ==========================================================
+    // 🚀 INICIALIZACIÓN
+    // ==========================================================
     window.onload = async function() {
-      updatePreview();
+      startTextPreviewLoop();
       try {
         const res = await fetch('/api/status');
         if (res.ok) {
           const data = await res.json();
           if (data.text) document.getElementById('clipText').value = data.text;
           if (data.color) {
-            const hex = '#' + data.color.toString(16).padStart(6, '0');
-            document.getElementById('clipColor').value = hex;
+            textColor = '#' + data.color.toString(16).padStart(6, '0');
+            document.getElementById('clipTextColor').value = textColor;
           }
-          if (data.fontSize) currentFontSize = data.fontSize;
+          if (data.bgColor !== undefined) {
+            textBgColor = '#' + data.bgColor.toString(16).padStart(6, '0');
+            document.getElementById('clipBgColor').value = textBgColor;
+          }
+          if (data.fontSize) {
+            currentFontSize = data.fontSize;
+            document.getElementById('clipFontSize').value = currentFontSize;
+            document.getElementById('fontSizeBadge').innerText = currentFontSize + ' px';
+          }
           if (data.scrollSpeed) {
-            document.getElementById('clipSpeed').value = data.scrollSpeed;
-            document.getElementById('speedVal').innerText = data.scrollSpeed;
+            scrollSpeed = data.scrollSpeed;
+            document.getElementById('clipSpeed').value = scrollSpeed;
+            document.getElementById('speedVal').innerText = scrollSpeed;
           }
           if (data.brightness) {
             document.getElementById('clipBrightness').value = data.brightness;
@@ -511,7 +809,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
             document.getElementById('swapTrue').classList.toggle('selected', data.swapBytes === true);
             document.getElementById('swapFalse').classList.toggle('selected', data.swapBytes === false);
           }
-          setMode(data.scrollMode !== false);
+          setTextScrollMode(data.scrollMode !== false);
         }
       } catch(e) {}
     };

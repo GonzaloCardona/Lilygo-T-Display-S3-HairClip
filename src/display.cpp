@@ -4,6 +4,7 @@ DisplayManager::DisplayManager()
     : _scrollSprite(&_tft),
       _rotation(1),
       _textColor(0xFFFFFF),
+      _bgColor(0x000000),
       _fontSize(3),
       _scrollSpeed(3),
       _scrolling(false),
@@ -12,7 +13,14 @@ DisplayManager::DisplayManager()
       _textHeight(24),
       _spriteY(0),
       _spriteHeight(80),
-      _lastScrollUpdate(0) {}
+      _lastScrollUpdate(0),
+      _bannerData(nullptr),
+      _bannerWidth(0),
+      _bannerHeight(0),
+      _bannerSpeed(3),
+      _bannerScroll(false),
+      _bannerSwapBytes(true),
+      _bannerBgColor565(0) {}
 
 void DisplayManager::begin() {
     // 1. Activar riel de alimentación (CRÍTICO)
@@ -58,26 +66,31 @@ void DisplayManager::powerOff() {
     digitalWrite(PIN_POWER_ON, LOW);
 }
 
-void DisplayManager::showStaticText(const String& text, uint32_t color, uint8_t fontSize) {
+void DisplayManager::showStaticText(const String& text, uint32_t color, uint8_t fontSize, uint32_t bgColor) {
+    _bannerData = nullptr;
     _scrolling = false;
     _currentText = text;
     _textColor = color;
-    _fontSize = fontSize;
+    _bgColor = bgColor;
+    _fontSize = (fontSize < 1) ? 1 : (fontSize > 5 ? 5 : fontSize);
 
-    _tft.fillScreen(TFT_BLACK);
+    uint16_t cBg565 = _tft.color565((bgColor >> 16) & 0xFF, (bgColor >> 8) & 0xFF, bgColor & 0xFF);
+    _tft.fillScreen(cBg565);
     _tft.setTextSize(_fontSize);
     
     // Convertir color HEX RGB888 a RGB565
     uint16_t c565 = _tft.color565((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
-    _tft.setTextColor(c565, TFT_BLACK);
+    _tft.setTextColor(c565, cBg565);
     _tft.setTextDatum(textdatum_t::middle_center);
 
     _tft.drawString(text, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 }
 
-void DisplayManager::showScrollText(const String& text, uint32_t color, uint8_t fontSize, uint8_t speed) {
+void DisplayManager::showScrollText(const String& text, uint32_t color, uint8_t fontSize, uint8_t speed, uint32_t bgColor) {
+    _bannerData = nullptr;
     _currentText = text;
     _textColor = color;
+    _bgColor = bgColor;
     _fontSize = (fontSize < 1) ? 1 : (fontSize > 5 ? 5 : fontSize);
     _scrollSpeed = (speed < 1) ? 1 : (speed > 10 ? 10 : speed);
     
@@ -89,12 +102,16 @@ void DisplayManager::showScrollText(const String& text, uint32_t color, uint8_t 
     _scrolling = true;
     _lastScrollUpdate = millis();
 
-    _tft.fillScreen(TFT_BLACK);
+    uint16_t cBg565 = _tft.color565((bgColor >> 16) & 0xFF, (bgColor >> 8) & 0xFF, bgColor & 0xFF);
+    _tft.fillScreen(cBg565);
 }
 
-void DisplayManager::showImage(const uint16_t* data, uint16_t w, uint16_t h, bool swapBytes) {
+void DisplayManager::showImage(const uint16_t* data, uint16_t w, uint16_t h, bool swapBytes, uint32_t bgColor) {
+    _bannerData = nullptr;
     _scrolling = false;
-    _tft.fillScreen(TFT_BLACK);
+    
+    uint16_t cBg565 = _tft.color565((bgColor >> 16) & 0xFF, (bgColor >> 8) & 0xFF, bgColor & 0xFF);
+    _tft.fillScreen(cBg565);
     
     // Centrar si es menor que la pantalla
     int x = (SCREEN_WIDTH - w) / 2;
@@ -105,6 +122,33 @@ void DisplayManager::showImage(const uint16_t* data, uint16_t w, uint16_t h, boo
     _tft.setSwapBytes(swapBytes);
     _tft.pushImage(x, y, w, h, data);
     _tft.setSwapBytes(false);
+}
+
+void DisplayManager::showBanner(const uint16_t* data, uint16_t w, uint16_t h, uint8_t speed, bool scroll, bool swapBytes, uint32_t bgColor) {
+    _bannerData = data;
+    _bannerWidth = w;
+    _bannerHeight = h;
+    _bannerSpeed = (speed < 1) ? 1 : (speed > 10 ? 10 : speed);
+    _bannerScroll = scroll;
+    _bannerSwapBytes = swapBytes;
+    _bannerBgColor565 = _tft.color565((bgColor >> 16) & 0xFF, (bgColor >> 8) & 0xFF, bgColor & 0xFF);
+
+    if (!_bannerScroll) {
+        _scrolling = false;
+        _tft.fillScreen(_bannerBgColor565);
+        int x = (SCREEN_WIDTH - w) / 2;
+        int y = (SCREEN_HEIGHT - h) / 2;
+        if (x < 0) x = 0;
+        if (y < 0) y = 0;
+        _tft.setSwapBytes(_bannerSwapBytes);
+        _tft.pushImage(x, y, w, h, _bannerData);
+        _tft.setSwapBytes(false);
+    } else {
+        _scrolling = true;
+        _scrollX = 0; // Comienza desde la izquierda para lectura inmediata
+        _lastScrollUpdate = millis();
+        _tft.fillScreen(_bannerBgColor565);
+    }
 }
 
 void DisplayManager::showConfigScreen(const char* ssid, const char* ip) {
@@ -156,22 +200,43 @@ void DisplayManager::update() {
     if (now - _lastScrollUpdate < 20) return; // ~50 FPS
     _lastScrollUpdate = now;
 
-    // Renderizar al sprite
-    _scrollSprite.fillSprite(TFT_BLACK);
-    _scrollSprite.setTextSize(_fontSize);
-    
-    uint16_t c565 = _tft.color565((_textColor >> 16) & 0xFF, (_textColor >> 8) & 0xFF, _textColor & 0xFF);
-    _scrollSprite.setTextColor(c565);
-    _scrollSprite.setTextDatum(textdatum_t::middle_left);
+    if (_bannerData != nullptr) {
+        // Modo Cartel / Banner PSRAM (fuentes nativas iPhone, emojis reales, fotos)
+        _scrollSprite.fillSprite(_bannerBgColor565);
+        _scrollSprite.setSwapBytes(_bannerSwapBytes);
 
-    _scrollSprite.drawString(_currentText, _scrollX, SCREEN_HEIGHT / 2);
-    _scrollSprite.pushSprite(0, 0);
+        // Dibujar banner principal
+        _scrollSprite.pushImage(_scrollX, 0, _bannerWidth, _bannerHeight, _bannerData);
 
-    // Mover texto hacia la izquierda
-    _scrollX -= _scrollSpeed;
+        // Bucle continuo sin huecos bruscos
+        const int gap = 60; // Separación entre repeticiones del cartel
+        int nextX = _scrollX + _bannerWidth + gap;
+        if (nextX < SCREEN_WIDTH) {
+            _scrollSprite.pushImage(nextX, 0, _bannerWidth, _bannerHeight, _bannerData);
+        }
 
-    // Cuando el texto sale completamente de la pantalla, reiniciar a la derecha
-    if (_scrollX < -_textWidth) {
-        _scrollX = SCREEN_WIDTH;
+        _scrollSprite.pushSprite(0, 0);
+
+        _scrollX -= _bannerSpeed;
+        if (_scrollX <= -(_bannerWidth + gap)) {
+            _scrollX += (_bannerWidth + gap);
+        }
+    } else {
+        // Fallback texto básico LovyanGFX
+        uint16_t cBg565 = _tft.color565((_bgColor >> 16) & 0xFF, (_bgColor >> 8) & 0xFF, _bgColor & 0xFF);
+        _scrollSprite.fillSprite(cBg565);
+        _scrollSprite.setTextSize(_fontSize);
+        
+        uint16_t c565 = _tft.color565((_textColor >> 16) & 0xFF, (_textColor >> 8) & 0xFF, _textColor & 0xFF);
+        _scrollSprite.setTextColor(c565, cBg565);
+        _scrollSprite.setTextDatum(textdatum_t::middle_left);
+
+        _scrollSprite.drawString(_currentText, _scrollX, SCREEN_HEIGHT / 2);
+        _scrollSprite.pushSprite(0, 0);
+
+        _scrollX -= _scrollSpeed;
+        if (_scrollX < -_textWidth) {
+            _scrollX = SCREEN_WIDTH;
+        }
     }
 }
